@@ -1021,11 +1021,11 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export CROSS_COMPILE=${CROSS_PREFIX}
 
     $MAKE prefix="${PREFIX}" \
-          inc_prefix="${PREFIX}/usr"
+          inc_prefix="${PREFIX}/usr" \
+          BUILD_CC="gcc" \
+          BUILD_CPPFLAGS="-I./libcap/include"
 
-    make install DESTDIR="${PREFIX}" \
-                 BUILD_CC="gcc" \
-                 BUILD_CPPFLAGS="-I./libcap/include"
+    make install DESTDIR="${PREFIX}"
 
     touch __package_installed
 fi
