@@ -1109,6 +1109,8 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     ./configure \
          --prefix="${PREFIX}" \
          --host="${HOST}" \
+         --bindir="${PREFIX}/sbin" \
+         --sbindir="${PREFIX}/sbin" \
          --enable-static \
          --disable-shared \
          --enable-debugging \
