@@ -1022,6 +1022,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     $MAKE prefix="${PREFIX}" \
           inc_prefix="${PREFIX}/usr" \
+          LIBDIR="${PREFIX}/lib" \
           BUILD_CC="gcc" \
           BUILD_CPPFLAGS="-I./libcap/include"
 
