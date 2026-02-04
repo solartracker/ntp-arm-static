@@ -1031,6 +1031,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
+exit 1
 
 ################################################################################
 # openssl-3.6.0
