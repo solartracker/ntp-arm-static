@@ -1,0 +1,1118 @@
+#!/bin/sh
+################################################################################
+# ntp-arm-musl.sh
+#
+# Copyright (C) 2025 Richard Elwell
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+################################################################################
+PATH_CMD="$(readlink -f -- "$0")"
+SCRIPT_DIR="$(dirname -- "$(readlink -f -- "$0")")"
+PARENT_DIR="$(dirname -- "$(dirname -- "$(readlink -f -- "$0")")")"
+CACHED_DIR="${PARENT_DIR}/solartracker-sources"
+FILE_DOWNLOADER='use_wget'
+#FILE_DOWNLOADER='use_curl'
+#FILE_DOWNLOADER='use_curl_socks5_proxy'; CURL_SOCKS5_PROXY="192.168.1.1:9150"
+set -e
+set -x
+
+main() {
+PKG_ROOT=ntp
+PKG_ROOT_VERSION="4.2.8p18"
+PKG_ROOT_RELEASE=1
+PKG_TARGET_CPU=armv7
+
+CROSSBUILD_SUBDIR="cross-arm-linux-musleabi-build"
+CROSSBUILD_DIR="${PARENT_DIR}/${CROSSBUILD_SUBDIR}"
+export TARGET=arm-linux-musleabi
+
+HOST_CPU="$(uname -m)"
+export PREFIX="${CROSSBUILD_DIR}"
+export HOST=${TARGET}
+export SYSROOT="${PREFIX}/${TARGET}"
+export PATH="${PATH}:${PREFIX}/bin:${SYSROOT}/bin"
+
+CROSS_PREFIX=${TARGET}-
+export CC=${CROSS_PREFIX}gcc
+export AR=${CROSS_PREFIX}ar
+export RANLIB=${CROSS_PREFIX}ranlib
+export STRIP=${CROSS_PREFIX}strip
+export READELF=${CROSS_PREFIX}readelf
+
+CFLAGS_COMMON="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
+
+#CFLAGS_COMMON="-g3 -ggdb3 -O0 -fno-omit-frame-pointer -fno-inline -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
+
+export CFLAGS="${CFLAGS_COMMON} -std=gnu99"
+export CXXFLAGS="${CFLAGS_COMMON} -std=gnu++17"
+export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
+export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
+
+case "${HOST_CPU}" in
+    armv7l)
+        LDD="${SYSROOT}/lib/libc.so --list"
+        ;;
+    *)
+        LDD=true
+        ;;
+esac
+
+SRC_ROOT="${CROSSBUILD_DIR}/src/${PKG_ROOT}"
+PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
+
+MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
+#MAKE="make -j1"                                  # one job at a time
+
+export PKG_CONFIG="pkg-config"
+export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
+unset PKG_CONFIG_PATH
+
+install_build_environment
+
+#create_cmake_toolchain_file
+
+download_and_compile
+
+create_install_package
+
+return 0
+} #END main()
+
+################################################################################
+# Create install package
+#
+create_install_package() {
+
+rm -rf "${PACKAGER_ROOT}"
+mkdir -p "${PACKAGER_ROOT}/sbin"
+cp -p "${PREFIX}/sbin/smartctl" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/smartd" "${PACKAGER_ROOT}/sbin/"
+add_items_to_install_package "${PREFIX}/sbin/smartctl"
+
+return 0
+} #END create_install_package()
+
+################################################################################
+# CMake toolchain file
+#
+create_cmake_toolchain_file() {
+mkdir -p "${SRC_ROOT}"
+
+# CMAKE options
+CMAKE_BUILD_TYPE="RelWithDebInfo"
+CMAKE_VERBOSE_MAKEFILE="YES"
+CMAKE_C_FLAGS="${CFLAGS}"
+CMAKE_CXX_FLAGS="${CXXFLAGS}"
+CMAKE_LD_FLAGS="${LDFLAGS}"
+CMAKE_CPP_FLAGS="${CPPFLAGS}"
+
+{
+    printf '%s\n' "# toolchain.cmake"
+    printf '%s\n' "set(CMAKE_SYSTEM_NAME Linux)"
+    printf '%s\n' "set(CMAKE_SYSTEM_PROCESSOR arm)"
+    printf '%s\n' ""
+    printf '%s\n' "# Cross-compiler"
+    printf '%s\n' "set(CMAKE_C_COMPILER arm-linux-musleabi-gcc)"
+    printf '%s\n' "set(CMAKE_CXX_COMPILER arm-linux-musleabi-g++)"
+    printf '%s\n' "set(CMAKE_AR arm-linux-musleabi-ar)"
+    printf '%s\n' "set(CMAKE_RANLIB arm-linux-musleabi-ranlib)"
+    printf '%s\n' "set(CMAKE_STRIP arm-linux-musleabi-strip)"
+    printf '%s\n' ""
+#    printf '%s\n' "# Optional: sysroot"
+#    printf '%s\n' "set(CMAKE_SYSROOT \"${SYSROOT}\")"
+    printf '%s\n' ""
+#    printf '%s\n' "# Avoid picking host libraries"
+#    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH \"${PREFIX}\")"
+    printf '%s\n' ""
+#    printf '%s\n' "# Tell CMake to search only in sysroot"
+#    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)"
+#    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)"
+#    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)"
+    printf '%s\n' ""
+#    printf '%s\n' "set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY) # critical for skipping warning probes"
+#    printf '%s\n' ""
+    printf '%s\n' "set(CMAKE_C_STANDARD 11)"
+    printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
+    printf '%s\n' ""
+} >"${SRC_ROOT}/arm-musl.toolchain.cmake"
+
+return 0
+} #END create_cmake_toolchain_file()
+
+################################################################################
+# Helpers
+
+# If autoconf/configure fails due to missing libraries or undefined symbols, you
+# immediately see all undefined references without having to manually search config.log
+handle_configure_error() {
+    local rc=$1
+
+    #grep -R --include="config.log" --color=always "undefined reference" .
+    #find . -name "config.log" -exec grep -H "undefined reference" {} \;
+    #find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option|No such file or directory" {} \;
+    find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option" {} \;
+
+    # Force failure if rc is zero, since error was detected
+    [ "${rc}" -eq 0 ] && return 1
+
+    return ${rc}
+}
+
+################################################################################
+# Package management
+
+# new files:       rw-r--r-- (644)
+# new directories: rwxr-xr-x (755)
+umask 022
+
+sign_file()
+( # BEGIN sub-shell
+    [ -n "$1" ]            || return 1
+
+    local target_path="$1"
+    local option="$2"
+    local sign_path="$(readlink -f "${target_path}").sha256"
+    local target_file="$(basename -- "${target_path}")"
+    local target_file_hash=""
+    local temp_path=""
+    local now_localtime=""
+
+    if [ ! -f "${target_path}" ]; then
+        echo "ERROR: File not found: ${target_path}"
+        return 1
+    fi
+
+    if [ -z "${option}" ]; then
+        target_file_hash="$(sha256sum "${target_path}" | awk '{print $1}')"
+    elif [ "${option}" = "full_extract" ]; then
+        target_file_hash="$(hash_archive "${target_path}")"
+    elif [ "${option}" = "xz_extract" ]; then
+        target_file_hash="$(xz -dc "${target_path}" | sha256sum | awk '{print $1}')"
+    else
+        return 1
+    fi
+
+    now_localtime="$(date '+%Y-%m-%d %H:%M:%S %Z %z')"
+
+    cleanup() { rm -f "${temp_path}"; }
+    trap 'cleanup; exit 130' INT
+    trap 'cleanup; exit 143' TERM
+    trap 'cleanup' EXIT
+    temp_path=$(mktemp "${sign_path}.XXXXXX")
+    {
+        #printf '%s released %s\n' "${target_file}" "${now_localtime}"
+        #printf '\n'
+        #printf 'SHA256: %s\n' "${target_file_hash}"
+        #printf '\n'
+        printf '%s  %s\n' "${target_file_hash}" "${target_file}"
+    } >"${temp_path}" || return 1
+    chmod --reference="${target_path}" "${temp_path}" || return 1
+    touch -r "${target_path}" "${temp_path}" || return 1
+    mv -f "${temp_path}" "${sign_path}" || return 1
+    # TODO: implement signing
+    trap - EXIT INT TERM
+
+    return 0
+) # END sub-shell
+
+hash_dir()
+( # BEGIN sub-shell
+    [ -n "$1" ] || return 1
+
+    dir_path="$1"
+
+    cleanup() { :; }
+    trap 'cleanup; exit 130' INT
+    trap 'cleanup; exit 143' TERM
+    trap 'cleanup' EXIT
+    cd "${dir_path}" || return 1
+    (
+        find ./ -type f | sort | while IFS= read -r f; do
+            set +x
+            echo "${f}"        # include the path
+            cat "${f}"         # include the contents
+        done
+    ) | sha256sum | awk '{print $1}'
+
+    return 0
+) # END sub-shell
+
+hash_archive()
+( # BEGIN sub-shell
+    [ -n "$1" ] || return 1
+
+    source_path="$1"
+    target_dir="$(dirname "${source_path}")"
+    target_file="$(basename "${source_path}")"
+
+    cd "${target_dir}" || return 1
+
+    cleanup() { rm -rf "${dir_tmp}"; }
+    trap 'cleanup; exit 130' INT
+    trap 'cleanup; exit 143' TERM
+    trap 'cleanup' EXIT
+    dir_tmp=$(mktemp -d "${target_file}.XXXXXX")
+    mkdir -p "${dir_tmp}"
+    if ! extract_package "${source_path}" "${dir_tmp}" >/dev/null 2>&1; then
+        return 1
+    else
+        hash_dir "${dir_tmp}"
+    fi
+
+    return 0
+) # END sub-shell
+
+# Checksum verification for downloaded file
+verify_hash() {
+    [ -n "$1" ] || return 1
+
+    local file_path="$1"
+    local expected="$2"
+    local option="$3"
+    local actual=""
+    local sign_path="$(readlink -f "${file_path}").sha256"
+    local line=""
+
+    if [ ! -f "${file_path}" ]; then
+        echo "ERROR: File not found: ${file_path}"
+        return 1
+    fi
+
+    if [ -z "${option}" ]; then
+        # hash the compressed binary archive itself
+        actual="$(sha256sum "${file_path}" | awk '{print $1}')"
+    elif [ "${option}" = "full_extract" ]; then
+        # hash the data inside the compressed binary archive
+        actual="$(hash_archive "${file_path}")"
+    elif [ "${option}" = "xz_extract" ]; then
+        # hash the data, file names, directory names, timestamps, permissions, and
+        # tar internal structures. this method is not as "future-proof" for archiving
+        # Github repos because it is possible that the tar internal structures
+        # could change over time as the tar implementations evolve.
+        actual="$(xz -dc "${file_path}" | sha256sum | awk '{print $1}')"
+    else
+        return 1
+    fi
+
+    if [ -z "${expected}" ]; then
+        if [ ! -f "${sign_path}" ]; then
+            echo "ERROR: Signature file not found: ${sign_path}"
+            return 1
+        else
+            # TODO: implement signature verify
+            IFS= read -r line <"${sign_path}" || return 1
+            expected=${line%%[[:space:]]*}
+            if [ -z "${expected}" ]; then
+                echo "ERROR: Bad signature file: ${sign_path}"
+                return 1
+            fi
+        fi
+    fi
+
+    if [ "${actual}" != "${expected}" ]; then
+        echo "ERROR: SHA256 mismatch for ${file_path}"
+        echo "Expected: ${expected}"
+        echo "Actual:   ${actual}"
+        return 1
+    fi
+
+    echo "SHA256 OK: ${file_path}"
+    return 0
+}
+
+# the signature file is just a checksum hash
+signature_file_exists() {
+    [ -n "$1" ] || return 1
+    local file_path="$1"
+    local sign_path="$(readlink -f "${file_path}").sha256"
+    if [ -f "${sign_path}" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+retry() {
+    local max=$1
+    shift
+    local i=1
+    while :; do
+        if ! "$@"; then
+            if [ "${i}" -ge "${max}" ]; then
+                return 1
+            fi
+            i=$((i + 1))
+            sleep 10
+        else
+            return 0
+        fi
+    done
+}
+
+invoke_download_command() {
+    [ -n "$1" ]                   || return 1
+    [ -n "$2" ]                   || return 1
+
+    local temp_path="$1"
+    local source_url="$2"
+    case "${FILE_DOWNLOADER}" in
+        use_wget)
+            if ! wget -O "${temp_path}" \
+                      --tries=1 --retry-connrefused --waitretry=5 \
+                      "${source_url}"; then
+                return 1
+            fi
+            ;;
+        use_curl)
+            if ! curl --fail --retry 1 --retry-connrefused --retry-delay 5 \
+                      --output "$temp_path" \
+                      --remote-time \
+                      "$source_url"; then
+                return 1
+            fi
+            ;;
+        use_curl_socks5_proxy)
+            if [ -z "${CURL_SOCKS5_PROXY}" ]; then
+                echo "You must specify a SOCKS5 proxy for download command: ${FILE_DOWNLOADER}" >&2
+                return 1
+            fi
+            if ! curl --socks5-hostname ${CURL_SOCKS5_PROXY} \
+                      --fail --retry 1 --retry-connrefused --retry-delay 5 \
+                      --output "$temp_path" \
+                      --remote-time \
+                      "$source_url"; then
+                return 1
+            fi
+            ;;
+        *)
+            echo "Unsupported file download command: '${FILE_DOWNLOADER}'" >&2
+            return 1
+            ;;
+    esac
+    return 0
+}
+
+download_clean() {
+    [ -n "$1" ]          || return 1
+    [ -n "$2" ]          || return 1
+    [ -n "$3" ]          || return 1
+
+    local temp_path="$1"
+    local source_url="$2"
+    local target_path="$3"
+
+    rm -f "${temp_path}"
+    if ! invoke_download_command "${temp_path}" "${source_url}"; then
+        rm -f "${temp_path}"
+        if [ -f "${target_path}" ]; then
+            return 0
+        else
+            return 1
+        fi
+    else
+        if [ -f "${target_path}" ]; then
+            rm -f "${temp_path}"
+            return 0
+        else
+            if ! mv -f "${temp_path}" "${target_path}"; then
+                rm -f "${temp_path}" "${target_path}"
+                return 1
+            fi
+        fi
+    fi
+
+    return 0
+}
+
+download()
+( # BEGIN sub-shell
+    [ -n "$1" ]            || return 1
+    [ -n "$2" ]            || return 1
+    [ -n "$3" ]            || return 1
+    [ -n "${CACHED_DIR}" ] || return 1
+
+    local source_url="$1"
+    local source="$2"
+    local target_dir="$3"
+    local cached_path="${CACHED_DIR}/${source}"
+    local target_path="${target_dir}/${source}"
+    local temp_path=""
+
+    if [ ! -f "${cached_path}" ]; then
+        mkdir -p "${CACHED_DIR}"
+        if [ ! -f "${target_path}" ]; then
+            cleanup() { rm -f "${cached_path}" "${temp_path}"; }
+            trap 'cleanup; exit 130' INT
+            trap 'cleanup; exit 143' TERM
+            trap 'cleanup' EXIT
+            temp_path=$(mktemp "${cached_path}.XXXXXX")
+            if ! retry 1000 download_clean "${temp_path}" "${source_url}" "${cached_path}"; then
+                return 1
+            fi
+            trap - EXIT INT TERM
+        else
+            cleanup() { rm -f "${cached_path}"; }
+            trap 'cleanup; exit 130' INT
+            trap 'cleanup; exit 143' TERM
+            trap 'cleanup' EXIT
+            if ! mv -f "${target_path}" "${cached_path}"; then
+                return 1
+            fi
+            trap - EXIT INT TERM
+        fi
+    fi
+
+    if [ ! -f "${target_path}" ]; then
+        if [ -f "${cached_path}" ]; then
+            ln -sfn "${cached_path}" "${target_path}"
+        fi
+    fi
+
+    return 0
+) # END sub-shell
+
+clone_github()
+( # BEGIN sub-shell
+    [ -n "$1" ]            || return 1
+    [ -n "$2" ]            || return 1
+    [ -n "$3" ]            || return 1
+    [ -n "$4" ]            || return 1
+    [ -n "$5" ]            || return 1
+    [ -n "${CACHED_DIR}" ] || return 1
+
+    local source_url="$1"
+    local source_version="$2"
+    local source_subdir="$3"
+    local source="$4"
+    local target_dir="$5"
+    local cached_path="${CACHED_DIR}/${source}"
+    local target_path="${target_dir}/${source}"
+    local temp_path=""
+    local temp_dir=""
+    local timestamp=""
+
+    if [ ! -f "${cached_path}" ]; then
+        umask 022
+        mkdir -p "${CACHED_DIR}"
+        if [ ! -f "${target_path}" ]; then
+            cleanup() { rm -rf "${temp_path}" "${temp_dir}"; }
+            trap 'cleanup; exit 130' INT
+            trap 'cleanup; exit 143' TERM
+            trap 'cleanup' EXIT
+            temp_path=$(mktemp "${cached_path}.XXXXXX")
+            temp_dir=$(mktemp -d "${target_dir}/temp.XXXXXX")
+            mkdir -p "${temp_dir}"
+            if ! retry 100 git clone "${source_url}" "${temp_dir}/${source_subdir}"; then
+                return 1
+            fi
+            cd "${temp_dir}/${source_subdir}"
+            if ! retry 100 git checkout ${source_version}; then
+                return 1
+            fi
+            if ! retry 100 git submodule update --init --recursive; then
+                return 1
+            fi
+            timestamp="$(git log -1 --format='@%ct')"
+            rm -rf .git
+            cd ../..
+            #chmod -R g-w,o-w "${temp_dir}/${source_subdir}"
+            if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
+                    -C "${temp_dir}" "${source_subdir}" \
+                    -cv | xz -zc -7e -T0 >"${temp_path}"; then
+                return 1
+            fi
+            touch -d "${timestamp}" "${temp_path}" || return 1
+            mv -f "${temp_path}" "${cached_path}" || return 1
+            rm -rf "${temp_dir}" || return 1
+            trap - EXIT INT TERM
+            sign_file "${cached_path}" "full_extract"
+        else
+            cleanup() { rm -f "${cached_path}"; }
+            trap 'cleanup; exit 130' INT
+            trap 'cleanup; exit 143' TERM
+            trap 'cleanup' EXIT
+            mv -f "${target_path}" "${cached_path}" || return 1
+            trap - EXIT INT TERM
+        fi
+    fi
+
+    if [ ! -f "${target_path}" ]; then
+        if [ -f "${cached_path}" ]; then
+            ln -sfn "${cached_path}" "${target_path}"
+        fi
+    fi
+
+    return 0
+) # END sub-shell
+
+download_archive() {
+    [ "$#" -eq 3 ] || [ "$#" -eq 5 ] || return 1
+
+    local source_url="$1"
+    local source="$2"
+    local target_dir="$3"
+    local source_version="$4"
+    local source_subdir="$5"
+
+    if [ -z "${source_version}" ]; then
+        download "${source_url}" "${source}" "${target_dir}"
+    else
+        clone_github "${source_url}" "${source_version}" "${source_subdir}" "${source}" "${target_dir}"
+    fi
+}
+
+apply_patch() {
+    [ -n "$1" ] || return 1
+    [ -n "$2" ] || return 1
+
+    local patch_file="$1"
+    local target_dir="$2"
+
+    if [ -f "${patch_file}" ]; then
+        echo "Applying patch: ${patch_file}"
+        if patch --dry-run --silent -p1 -d "${target_dir}/" -i "${patch_file}"; then
+            if ! patch -p1 -d "${target_dir}/" -i "${patch_file}"; then
+                echo "The patch failed."
+                return 1
+            fi
+        else
+            echo "The patch was not applied. Failed dry run."
+            return 1
+        fi
+    else
+        echo "Patch not found: ${patch_file}"
+        return 1
+    fi
+
+    return 0
+}
+
+apply_patch_folder() {
+    [ -n "$1" ] || return 1
+    [ -n "$2" ] || return 1
+
+    local patch_dir="$1"
+    local target_dir="$2"
+    local patch_file=""
+    local rc=0
+
+    if [ -d "${patch_dir}" ]; then
+        for patch_file in ${patch_dir}/*.patch; do
+            if [ -f "${patch_file}" ]; then
+                if ! apply_patch "${patch_file}" "${target_dir}"; then
+                    rc=1
+                fi
+            fi
+        done
+    fi
+
+    return ${rc}
+}
+
+apply_patches() {
+    [ -n "$1" ] || return 1
+    [ -n "$2" ] || return 1
+
+    local patch_file_or_dir="$1"
+    local target_dir="$2"
+
+    if [ -f "${patch_file_or_dir}" ]; then
+        if ! apply_patch "${patch_file_or_dir}" "${target_dir}"; then
+            return 1
+        fi
+    elif [ -d "${patch_file_or_dir}" ]; then
+        if ! apply_patch_folder "${patch_file_or_dir}" "${target_dir}"; then
+            return 1
+        fi
+    fi
+
+    return 0
+}
+
+extract_package() {
+    [ -n "$1" ] || return 1
+    [ -n "$2" ] || return 1
+
+    local source_path="$1"
+    local target_dir="$2"
+
+    case "${source_path}" in
+        *.tar.gz|*.tgz)
+            tar xzvf "${source_path}" -C "${target_dir}" || return 1
+            ;;
+        *.tar.bz2|*.tbz)
+            tar xjvf "${source_path}" -C "${target_dir}" || return 1
+            ;;
+        *.tar.xz|*.txz)
+            tar xJvf "${source_path}" -C "${target_dir}" || return 1
+            ;;
+        *.tar.lz|*.tlz)
+            tar xlvf "${source_path}" -C "${target_dir}" || return 1
+            ;;
+        *.tar.zst)
+            tar xvf "${source_path}" -C "${target_dir}" || return 1
+            ;;
+        *.tar)
+            tar xvf "${source_path}" -C "${target_dir}" || return 1
+            ;;
+        *)
+            echo "Unsupported archive type: ${source_path}" >&2
+            return 1
+            ;;
+    esac
+
+    return 0
+}
+
+unpack_archive()
+( # BEGIN sub-shell
+    [ -n "$1" ] || return 1
+    [ -n "$2" ] || return 1
+
+    local source_path="$1"
+    local target_dir="$2"
+    local dir_tmp=""
+
+    if [ ! -d "${target_dir}" ]; then
+        cleanup() { rm -rf "${dir_tmp}" "${target_dir}"; }
+        trap 'cleanup; exit 130' INT
+        trap 'cleanup; exit 143' TERM
+        trap 'cleanup' EXIT
+        dir_tmp=$(mktemp -d "${target_dir}.XXXXXX")
+        mkdir -p "${dir_tmp}"
+        if ! extract_package "${source_path}" "${dir_tmp}"; then
+            return 1
+        else
+            # try to rename single sub-directory
+            if ! mv -f "${dir_tmp}"/* "${target_dir}"/; then
+                # otherwise, move multiple files and sub-directories
+                mkdir -p "${target_dir}" || return 1
+                mv -f "${dir_tmp}"/* "${target_dir}"/ || return 1
+            fi
+        fi
+        rm -rf "${dir_tmp}" || return 1
+        trap - EXIT INT TERM
+    fi
+
+    return 0
+) # END sub-shell
+
+get_latest_package() {
+    [ "$#" -eq 3 ] || return 1
+
+    local prefix=$1
+    local middle=$2
+    local suffix=$3
+    local pattern=${prefix}${middle}${suffix}
+    local latest=""
+    local version=""
+
+    (
+        cd "$CACHED_DIR" || return 1
+
+        set -- $pattern
+        [ "$1" != "$pattern" ] || return 1   # no matches
+
+        latest=$1
+        for f do
+            latest=$f
+        done
+
+        version=${latest#"$prefix"}
+        version=${version%"$suffix"}
+        printf '%s\n' "$version"
+    )
+    return 0
+}
+
+contains() {
+    haystack=$1
+    needle=$2
+
+    case $haystack in
+        *"$needle"*) return 0 ;;
+        *)           return 1 ;;
+    esac
+}
+
+is_version_git() {
+    case "$1" in
+        *+git*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+update_patch_library() {
+    [ -n "$1" ]            || return 1
+    [ -n "$2" ]            || return 1
+    [ -n "$3" ]            || return 1
+    [ -n "$4" ]            || return 1
+    [ -n "${PARENT_DIR}" ] || return 1
+    [ -n "${SCRIPT_DIR}" ] || return 1
+
+    local git_commit="$1"
+    local patches_dir="$2"
+    local pkg_name="$3"
+    local pkg_subdir="$4"
+    local entware_packages_dir="${PARENT_DIR}/entware-packages"
+
+    if [ ! -d "${entware_packages_dir}" ]; then
+        cd "${PARENT_DIR}"
+        git clone https://github.com/Entware/entware-packages
+    fi
+
+    cd "${entware_packages_dir}"
+    git fetch origin
+    git reset --hard "${git_commit}"
+    [ -d "${patches_dir}" ] || return 1
+    mkdir -p "${SCRIPT_DIR}/patches/${pkg_name}/${pkg_subdir}/entware"
+    cp -pf "${patches_dir}"/* "${SCRIPT_DIR}/patches/${pkg_name}/${pkg_subdir}/entware/"
+    cd ..
+
+    return 0
+}
+
+check_static() {
+    local rc=0
+    for bin in "$@"; do
+        echo "Checking ${bin}"
+        file "${bin}" || true
+        if ${READELF} -d "${bin}" 2>/dev/null | grep NEEDED; then
+            rc=1
+        fi || true
+        "${LDD}" "${bin}" 2>&1 || true
+    done
+
+    if [ ${rc} -eq 1 ]; then
+        echo "*** NOT STATICALLY LINKED ***"
+        echo "*** NOT STATICALLY LINKED ***"
+        echo "*** NOT STATICALLY LINKED ***"
+    fi
+
+    return ${rc}
+}
+
+finalize_build() {
+    set +x
+    echo ""
+    echo "Stripping symbols and sections from files..."
+    ${STRIP} -v "$@"
+
+    # Exit here, if the programs are not statically linked.
+    # If any binaries are not static, check_static() returns 1
+    # set -e will cause the shell to exit here, so renaming won't happen below.
+    echo ""
+    echo "Checking statically linked programs..."
+    check_static "$@"
+
+    # Append ".static" to the program names
+    echo ""
+    echo "Create symbolic link with .static suffix..."
+    for bin in "$@"; do
+        case "$bin" in
+            *.static) : ;;   # do nothing
+            *) ln -sfn "$(basename "${bin}")" "${bin}.static" ;;
+        esac
+    done
+    set -x
+
+    return 0
+}
+
+# temporarily hide shared libraries (.so) to force cmake to use the static ones (.a)
+hide_shared_libraries() {
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    mkdir "${PREFIX}/lib_hidden" || true
+    mv "${PREFIX}/lib/"*".so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib_hidden/libcc1."* "${PREFIX}/lib/" || true
+    return 0
+}
+
+# restore the hidden shared libraries
+restore_shared_libraries() {
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    rmdir "${PREFIX}/lib_hidden" || true
+    return 0
+}
+
+add_items_to_install_package()
+( # BEGIN sub-shell
+    [ -n "$1" ] || return 1
+    [ -n "$PKG_ROOT" ]            || return 1
+    [ -n "$PKG_ROOT_VERSION" ]    || return 1
+    [ -n "$PKG_ROOT_RELEASE" ]    || return 1
+    [ -n "$PKG_TARGET_CPU" ]      || return 1
+    [ -n "$CACHED_DIR" ]          || return 1
+
+    local timestamp_file="$1"
+    local pkg_files=""
+    for fmt in gz xz; do
+        local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}.tar.${fmt}"
+        local pkg_path="${CACHED_DIR}/${pkg_file}"
+        local temp_path=""
+        local timestamp=""
+        local compressor=""
+
+        case "${fmt}" in
+            gz) compressor="gzip -9 -n" ;;
+            xz) compressor="xz -zc -7e -T0" ;;
+        esac
+
+        echo "[*] Creating install package (.${fmt})..."
+        mkdir -p "${CACHED_DIR}"
+        rm -f "${pkg_path}"
+        rm -f "${pkg_path}.sha256"
+        cleanup() { rm -f "${temp_path}"; }
+        trap 'cleanup; exit 130' INT
+        trap 'cleanup; exit 143' TERM
+        trap 'cleanup' EXIT
+        temp_path=$(mktemp "${pkg_path}.XXXXXX")
+        timestamp="@$(stat -c %Y "${timestamp_file}")"
+        cd "${PACKAGER_ROOT}" || return 1
+        if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
+                --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
+                -C "${PACKAGER_ROOT}" * \
+                -cv | ${compressor} >"${temp_path}"; then
+            return 1
+        fi
+        touch -d "${timestamp}" "${temp_path}" || return 1
+        chmod 644 "${temp_path}" || return 1
+        mv -f "${temp_path}" "${pkg_path}" || return 1
+        trap - EXIT INT TERM
+        echo ""
+        sign_file "${pkg_path}"
+
+        pkg_files="${pkg_files}${pkg_path}\n"
+    done
+
+    echo "[*] Finished creating the install package."
+    echo ""
+    echo "[*] Install package is here:"
+    echo "${pkg_files}"
+    echo ""
+
+    return 0
+) # END sub-shell
+
+################################################################################
+# Install the build environment
+# ARM Linux musl Cross-Compiler v0.2.1
+#
+install_build_environment() {
+( #BEGIN sub-shell
+PKG_NAME=cross-arm-linux-musleabi
+get_latest() { get_latest_package "${PKG_NAME}-${HOST_CPU}-" "??????????????" ".tar.xz"; }
+#PKG_VERSION="$(get_latest)" # this line will fail if you did not build a toolchain yourself
+PKG_VERSION=0.2.1 # this line will cause a toolchain to be downloaded from Github
+PKG_SOURCE="${PKG_NAME}-${HOST_CPU}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://github.com/solartracker/${PKG_NAME}/releases/download/${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_SOURCE_PATH="${CACHED_DIR}/${PKG_SOURCE}"
+
+if signature_file_exists "${PKG_SOURCE_PATH}"; then
+    # use an archived toolchain that you built yourself, along with a signature
+    # file that was created automatically.  the version number is a 14 digit
+    # timestamp and a symbolic link was automatically created for the release
+    # asset that would normally have been downloaded. all this is done for you
+    # by the toolchain build script: build-arm-linux-musleabi.sh
+    #
+    # Example of what your sources directory might look like:
+    # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz
+    # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sha256
+    # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz
+    # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz.sha256 -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sha256
+    #
+    PKG_HASH=""
+else
+    # alternatively, the toolchain can be downloaded from Github. note that the version
+    # number is the Github tag, instead of a 14 digit timestamp.
+    case "${HOST_CPU}" in
+        armv7l)
+            # cross-arm-linux-musleabi-armv7l-0.2.1.tar.xz
+            PKG_HASH="112a4668a4d2b1d11e1c3234be12ed5cd3b06d3abc2f23e336cd0bb677e2c844"
+            ;;
+        x86_64)
+            # cross-arm-linux-musleabi-x86_64-0.2.1.tar.xz
+            PKG_HASH="1b66015d67801aa6f73d2341d9513639140dcf593322437e17a8fe47c3c2d725"
+            ;;
+        *)
+            echo "Unsupported CPU architecture: "${HOST_CPU} >&2
+            exit 1
+            ;;
+    esac
+fi
+
+# Check if toolchain exists and install it, if needed
+if [ ! -d "${CROSSBUILD_DIR}" ]; then
+    echo "Toolchain not found at ${CROSSBUILD_DIR}. Installing..."
+    echo ""
+    cd ${PARENT_DIR}
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "${CACHED_DIR}"
+    verify_hash "${PKG_SOURCE_PATH}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE_PATH}" "${CROSSBUILD_DIR}"
+fi
+
+# Check for required toolchain tools
+if [ ! -x "${CROSSBUILD_DIR}/bin/${TARGET}-gcc" ]; then
+    echo "ERROR: Toolchain installation appears incomplete."
+    echo "Missing ${TARGET}-gcc in ${CROSSBUILD_DIR}/bin"
+    echo ""
+    exit 1
+fi
+if [ ! -x "${CROSSBUILD_DIR}/${TARGET}/lib/libc.so" ]; then
+    echo "ERROR: Toolchain installation appears incomplete."
+    echo "Missing libc.so in ${CROSSBUILD_DIR}/${TARGET}/lib"
+    echo ""
+    exit 1
+fi
+) #END sub-shell
+} #END install_build_environment()
+
+download_and_compile() {
+mkdir -p "${SRC_ROOT}"
+
+################################################################################
+# openssl-3.6.0
+(
+PKG_NAME=openssl
+PKG_VERSION=3.6.0
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://github.com/openssl/openssl/releases/download/openssl-${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="b6a5f44b7eb69e3fa35dbf15524405b44837a481d43d81daddde3ff21fcbb8e9"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    export LDFLAGS="-static ${LDFLAGS}"
+    export LIBS="-lzstd -lz"
+    export CFLAGS="${CFLAGS} -Wno-int-conversion"
+
+    ./Configure linux-armv4 no-asm \
+        enable-zlib enable-zstd no-shared \
+        no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
+        no-err no-async \
+        no-aria no-sm2 no-sm3 no-sm4 \
+        no-dso no-ssl3 no-comp \
+        enable-rc5 \
+        --prefix="${PREFIX}" \
+        --with-rand-seed=devrandom \
+        -DOPENSSL_PREFER_CHACHA_OVER_GCM
+
+    $MAKE
+    make install
+
+    # strip and verify there are no dependencies for static build
+    finalize_build "${PREFIX}/bin/openssl"
+
+    touch __package_installed
+fi
+)
+
+################################################################################
+# ntp-4.2.8p18
+(
+PKG_NAME=ntp
+PKG_VERSION="4.2.8p18"
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://downloads.nwtime.org/ntp/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="cf84c5f3fb1a295284942624d823fffa634144e096cfc4f9969ac98ef5f468e5"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
+    rm -rf "$PKG_SOURCE_SUBDIR"
+    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
+    verify_hash "$PKG_SOURCE" "$PKG_HASH"
+    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
+    cd "$PKG_SOURCE_SUBDIR"
+
+    PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig" \
+    ./configure \
+         --prefix="${PREFIX}" \
+         --host="${HOST}" \
+         --enable-static \
+         --disable-shared \
+         --enable-debugging \
+         --enable-signalled-io \
+         --enable-autokey \
+         --enable-ipv6 \
+         --enable-saveconfig \
+         --enable-linuxcaps \
+         --enable-c99-snprintf \
+         --enable-local-libopts \
+         --enable-local-libevent \
+         --enable-accurate-adjtime \
+         --with-sntp \
+         --with-lineeditlibs \
+         --with-crypto \
+         --with-openssl-libdir="${PREFIX}/lib" \
+         --with-openssl-incdir="${PREFIX}/include" \
+         --enable-verbose-ssl \
+         --enable-openssl-random \
+         --enable-thread-support \
+         --with-threads \
+         --with-yielding-select=yes \
+         --without-rpath \
+         --without-ntpsnmpd \
+         --disable-problem-tests \
+         --disable-dependency-tracking \
+         --disable-silent-rules \
+         --disable-all-clocks \
+         --enable-parse-clocks \
+         --enable-NMEA --enable-ATOM --enable-SHM --enable-LOCAL-CLOCK \
+         --enable-SPECTRACOM --enable-ARBITER --enable-HPGPS \
+         --enable-TRIMBLE --enable-JJY --enable-ZYFER \
+         --enable-GPSD \
+    || handle_configure_error $?
+
+    $MAKE
+    make install
+
+    # strip and verify there are no dependencies for static build
+    finalize_build \
+        "$CROSSBUILD_DIR/usr/bin/ntpd"
+
+    touch __package_installed
+fi
+)
+
+set +x
+echo ""
+echo "[*] Finished compiling ${PKG_ROOT} ${PKG_ROOT_VERSION}"
+echo ""
+
+return 0
+} #END download_and_compile()
+
+
+main
+echo ""
+echo "[*] Script exited cleanly."
+echo ""
+
