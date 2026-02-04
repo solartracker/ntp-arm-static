@@ -1052,7 +1052,6 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
     cd "$PKG_SOURCE_SUBDIR"
 
-    PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig" \
     ./configure \
          --prefix="${PREFIX}" \
          --host="${HOST}" \
