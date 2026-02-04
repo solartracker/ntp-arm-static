@@ -1100,6 +1100,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker" "."
 
+    export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
     export LIBS="-lcap"
 
     # temporarily hide shared libraries (.so) to force static ones (.a)
