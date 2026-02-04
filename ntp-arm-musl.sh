@@ -988,6 +988,35 @@ download_and_compile() {
 mkdir -p "${SRC_ROOT}"
 
 ################################################################################
+# libcap-2.77
+(
+PKG_NAME=libcap
+PKG_VERSION=2.77
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="897bc18b44afc26c70e78cead3dbb31e154acc24bee085a5a09079a88dbf6f52"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    export CROSS_COMPILE=${CROSS_PREFIX}
+
+    $MAKE
+    make install DESTDIR="${PREFIX}"
+
+    touch __package_installed
+fi
+)
+
+################################################################################
 # openssl-3.6.0
 (
 PKG_NAME=openssl
@@ -1052,6 +1081,13 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
     cd "$PKG_SOURCE_SUBDIR"
 
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker" "."
+
+    export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
+
+    # temporarily hide shared libraries (.so) to force static ones (.a)
+    hide_shared_libraries
+
     ./configure \
          --prefix="${PREFIX}" \
          --host="${HOST}" \
@@ -1082,7 +1118,6 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
          --disable-problem-tests \
          --disable-dependency-tracking \
          --disable-silent-rules \
-         --disable-all-clocks \
          --enable-parse-clocks \
          --enable-NMEA --enable-ATOM --enable-SHM --enable-LOCAL-CLOCK \
          --enable-SPECTRACOM --enable-ARBITER --enable-HPGPS \
@@ -1093,9 +1128,11 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     $MAKE
     make install
 
+    # restore the hidden shared libraries
+    restore_shared_libraries
+
     # strip and verify there are no dependencies for static build
-    finalize_build \
-        "$CROSSBUILD_DIR/usr/bin/ntpd"
+    finalize_build "${PREFIX}/sbin/ntpd"
 
     touch __package_installed
 fi

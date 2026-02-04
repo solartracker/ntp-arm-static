@@ -1,0 +1,13 @@
+--- a/ntpd/ntp_io.c	2024-05-07 07:21:17.000000000 -0400
++++ b/ntpd/ntp_io.c	2026-02-04 01:34:09.250762682 -0500
+@@ -3459,8 +3459,8 @@
+ 						pts.tv_nsec = (long)(ticks * 1e9 *
+ 								     sys_tick);
+ 					}
+-					DPRINTF(4, ("fetch_timestamp: system nsec network time stamp: %ld.%09ld\n",
+-						    pts.tv_sec, pts.tv_nsec));
++					DPRINTF(4, ("fetch_timestamp: system nsec network time stamp: %jd.%09ld\n",
++						    (intmax_t)pts.tv_sec, pts.tv_nsec));
+ 					nts = tspec_stamp_to_lfp(pts);
+ 				}
+ 				break;
