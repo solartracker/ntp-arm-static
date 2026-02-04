@@ -62,10 +62,10 @@ export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
 
 case "${HOST_CPU}" in
     armv7l)
-        LDD="${SYSROOT}/lib/libc.so --list"
+        ARCH_NATIVE=true
         ;;
     *)
-        LDD=true
+        ARCH_NATIVE=false
         ;;
 esac
 
@@ -97,9 +97,8 @@ create_install_package() {
 
 rm -rf "${PACKAGER_ROOT}"
 mkdir -p "${PACKAGER_ROOT}/sbin"
-cp -p "${PREFIX}/sbin/smartctl" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/smartd" "${PACKAGER_ROOT}/sbin/"
-add_items_to_install_package "${PREFIX}/sbin/smartctl"
+cp -p "${PREFIX}/sbin/ntpd" "${PACKAGER_ROOT}/sbin/"
+add_items_to_install_package "${PREFIX}/sbin/ntpd"
 
 return 0
 } #END create_install_package()
@@ -789,6 +788,14 @@ update_patch_library() {
 }
 
 check_static() {
+    ldd() {
+        if ${ARCH_NATIVE}; then
+            "${SYSROOT}/lib/libc.so" --list "$@"
+        else
+            true
+        fi
+    }
+
     local rc=0
     for bin in "$@"; do
         echo "Checking ${bin}"
@@ -796,7 +803,7 @@ check_static() {
         if ${READELF} -d "${bin}" 2>/dev/null | grep NEEDED; then
             rc=1
         fi || true
-        "${LDD}" "${bin}" 2>&1 || true
+        ldd "${bin}" 2>&1 || true
     done
 
     if [ ${rc} -eq 1 ]; then
@@ -837,16 +844,16 @@ finalize_build() {
 
 # temporarily hide shared libraries (.so) to force cmake to use the static ones (.a)
 hide_shared_libraries() {
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
-    mkdir "${PREFIX}/lib_hidden" || true
-    mv "${PREFIX}/lib/"*".so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib_hidden/libcc1."* "${PREFIX}/lib/" || true
+    mv -f "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    mkdir -p "${PREFIX}/lib_hidden" || true
+    mv -f "${PREFIX}/lib/"*".so"* "${PREFIX}/lib_hidden/" || true
+    mv -f "${PREFIX}/lib_hidden/libcc1."* "${PREFIX}/lib/" || true
     return 0
 }
 
 # restore the hidden shared libraries
 restore_shared_libraries() {
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    mv -f "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
     rmdir "${PREFIX}/lib_hidden" || true
     return 0
 }
@@ -898,7 +905,11 @@ add_items_to_install_package()
         echo ""
         sign_file "${pkg_path}"
 
-        pkg_files="${pkg_files}${pkg_path}\n"
+        if [ -z "${pkg_files}" ]; then
+            pkg_files="${pkg_path}"
+        else
+            pkg_files="${pkg_files}\n${pkg_path}"
+        fi
     done
 
     echo "[*] Finished creating the install package."
@@ -1084,6 +1095,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker" "."
 
     export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
+    export LIBS="-lcap"
 
     # temporarily hide shared libraries (.so) to force static ones (.a)
     hide_shared_libraries
@@ -1125,7 +1137,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
          --enable-GPSD \
     || handle_configure_error $?
 
-    $MAKE
+    $MAKE LDFLAGS="-static -all-static ${LDFLAGS}"
     make install
 
     # restore the hidden shared libraries
