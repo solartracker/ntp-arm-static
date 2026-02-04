@@ -98,6 +98,17 @@ create_install_package() {
 rm -rf "${PACKAGER_ROOT}"
 mkdir -p "${PACKAGER_ROOT}/sbin"
 cp -p "${PREFIX}/sbin/ntpd" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/ntpdate" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/ntpdc" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/ntp-keygen" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/ntpq" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/sntp" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/tickadj" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/calc_tickadj" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/ntpsweep" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/ntptrace" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/ntp-wait" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/sbin/update-leap" "${PACKAGER_ROOT}/sbin/"
 add_items_to_install_package "${PREFIX}/sbin/ntpd"
 
 return 0
@@ -1152,7 +1163,13 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     restore_shared_libraries
 
     # strip and verify there are no dependencies for static build
-    finalize_build "${PREFIX}/sbin/ntpd"
+    finalize_build "${PREFIX}/sbin/ntpd" \
+                   "${PREFIX}/sbin/ntpdate" \
+                   "${PREFIX}/sbin/ntpdc" \
+                   "${PREFIX}/sbin/ntp-keygen" \
+                   "${PREFIX}/sbin/ntpq" \
+                   "${PREFIX}/sbin/sntp" \
+                   "${PREFIX}/sbin/tickadj"
 
     touch __package_installed
 fi
