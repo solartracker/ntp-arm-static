@@ -1027,7 +1027,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
           BUILD_CPPFLAGS="-I./libcap/include"
 
     make install DESTDIR="${PREFIX}" \
-                 lib="lib" \
+                 lib="lib"
 
     touch __package_installed
 fi
