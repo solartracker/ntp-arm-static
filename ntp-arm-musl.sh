@@ -1020,12 +1020,17 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     export CROSS_COMPILE=${CROSS_PREFIX}
 
-    $MAKE
-    make install DESTDIR="${PREFIX}"
+    $MAKE prefix="${PREFIX}" \
+          inc_prefix="${PREFIX}/usr"
+
+    make install DESTDIR="${PREFIX}" \
+                 BUILD_CC="gcc" \
+                 BUILD_CPPFLAGS="-I./libcap/include"
 
     touch __package_installed
 fi
 )
+exit 1
 
 ################################################################################
 # openssl-3.6.0
@@ -1094,7 +1099,6 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker" "."
 
-    export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
     export LIBS="-lcap"
 
     # temporarily hide shared libraries (.so) to force static ones (.a)
