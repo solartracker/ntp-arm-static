@@ -1166,10 +1166,10 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     finalize_build "${PREFIX}/sbin/ntpd" \
                    "${PREFIX}/sbin/ntpdate" \
                    "${PREFIX}/sbin/ntp-keygen" \
-                   "${PREFIX}/sbin/tickadj"
+                   "${PREFIX}/sbin/tickadj" \
                    "${PREFIX}/bin/ntpdc" \
                    "${PREFIX}/bin/ntpq" \
-                   "${PREFIX}/bin/sntp" \
+                   "${PREFIX}/bin/sntp"
 
     touch __package_installed
 fi
