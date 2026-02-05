@@ -194,7 +194,7 @@ sign_file()
 
     local target_path="$1"
     local option="$2"
-    local sign_path="$(readlink -f "${target_path}").sha256"
+    local sign_path="$(readlink -f "${target_path}").sum"
     local target_file="$(basename -- "${target_path}")"
     local target_file_hash=""
     local temp_path=""
@@ -293,7 +293,7 @@ verify_hash() {
     local expected="$2"
     local option="$3"
     local actual=""
-    local sign_path="$(readlink -f "${file_path}").sha256"
+    local sign_path="$(readlink -f "${file_path}").sum"
     local line=""
 
     if [ ! -f "${file_path}" ]; then
@@ -347,7 +347,7 @@ verify_hash() {
 signature_file_exists() {
     [ -n "$1" ] || return 1
     local file_path="$1"
-    local sign_path="$(readlink -f "${file_path}").sha256"
+    local sign_path="$(readlink -f "${file_path}").sum"
     if [ -f "${sign_path}" ]; then
         return 0
     else
@@ -896,7 +896,7 @@ add_items_to_install_package()
         echo "[*] Creating install package (.${fmt})..."
         mkdir -p "${CACHED_DIR}"
         rm -f "${pkg_path}"
-        rm -f "${pkg_path}.sha256"
+        rm -f "${pkg_path}.sum"
         cleanup() { rm -f "${temp_path}"; }
         trap 'cleanup; exit 130' INT
         trap 'cleanup; exit 143' TERM
@@ -957,9 +957,9 @@ if signature_file_exists "${PKG_SOURCE_PATH}"; then
     #
     # Example of what your sources directory might look like:
     # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz
-    # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sha256
+    # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sum
     # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz
-    # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz.sha256 -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sha256
+    # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz.sum -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sum
     #
     PKG_HASH=""
 else
