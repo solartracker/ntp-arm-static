@@ -1,0 +1,72 @@
+diff -u a/sntp/loc/darwin b/sntp/loc/darwin
+--- a/sntp/loc/darwin	2015-03-21 22:59:09.000000000 -0400
++++ b/sntp/loc/darwin	2026-02-04 18:25:23.820512126 -0500
+@@ -8,7 +8,7 @@
+ ntpdsim,sbin,8
+ ntpq,bin,8
+ ntpsnmpd,sbin,8
+-ntpsweep,noinst,8
++ntpsweep,sbin,8
+ ntptime,sbin,8
+ ntptrace,sbin,8
+ sntp,bin,8
+diff -u a/sntp/loc/freebsd b/sntp/loc/freebsd
+--- a/sntp/loc/freebsd	2015-03-21 22:59:09.000000000 -0400
++++ b/sntp/loc/freebsd	2026-02-04 18:25:43.910330514 -0500
+@@ -9,7 +9,7 @@
+ ntpq,sbin,8
+ ntpsnmpd,sbin,8
+ ntptime,sbin,8
+-ntpsweep,noinst,8
++ntpsweep,sbin,8
+ ntptrace,sbin,8
+ sntp,sbin,8
+ update-leap,sbin,8
+diff -u a/sntp/loc/legacy b/sntp/loc/legacy
+--- a/sntp/loc/legacy	2015-03-21 22:59:09.000000000 -0400
++++ b/sntp/loc/legacy	2026-02-04 18:30:16.177834076 -0500
+@@ -9,7 +9,7 @@
+ ntpdsim,bin,1
+ ntpq,bin,1
+ ntpsnmpd,bin,1
+-ntpsweep,noinst,1
++ntpsweep,bin,1
+ ntptime,bin,1
+ ntptrace,bin,1
+ sntp,bin,1
+diff -u a/sntp/loc/netbsd b/sntp/loc/netbsd
+--- a/sntp/loc/netbsd	2015-03-21 22:59:09.000000000 -0400
++++ b/sntp/loc/netbsd	2026-02-04 18:26:09.770096664 -0500
+@@ -8,7 +8,7 @@
+ ntpdsim,sbin,8
+ ntpq,sbin,8
+ ntpsnmpd,sbin,8
+-ntpsweep,noinst,8
++ntpsweep,sbin,8
+ ntptime,sbin,8
+ ntptrace,sbin,8
+ sntp,sbin,1
+diff -u a/sntp/loc/redhat b/sntp/loc/redhat
+--- a/sntp/loc/redhat	2013-12-27 00:50:45.000000000 -0500
++++ b/sntp/loc/redhat	2026-02-04 18:26:20.220000559 -0500
+@@ -9,7 +9,7 @@
+ ntpdsim,sbin,8
+ ntpq,sbin,8
+ ntpsnmpd,sbin,8
+-ntpsweep,noinst,8
++ntpsweep,sbin,8
+ ntptime,sbin,8
+ ntptrace,sbin,8
+ sntp,sbin,8
+diff -u a/sntp/loc/solaris b/sntp/loc/solaris
+--- a/sntp/loc/solaris	2015-03-21 22:59:09.000000000 -0400
++++ b/sntp/loc/solaris	2026-02-04 18:26:33.219881021 -0500
+@@ -9,7 +9,7 @@
+ ntpdsim,sbin,1m
+ ntpq,sbin,1m
+ ntpsnmpd,libexec,1m
+-ntpsweep,noinst,1m
++ntpsweep,sbin,1m
+ ntptime,sbin,1m
+ ntptrace,sbin,1m
+ sntp,sbin,1m

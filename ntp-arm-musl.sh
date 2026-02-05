@@ -97,18 +97,19 @@ create_install_package() {
 
 rm -rf "${PACKAGER_ROOT}"
 mkdir -p "${PACKAGER_ROOT}/sbin"
+mkdir -p "${PACKAGER_ROOT}/bin"
 cp -p "${PREFIX}/sbin/ntpd" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/ntpdate" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/ntpdc" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/ntp-keygen" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/ntpq" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/sntp" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/tickadj" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/calc_tickadj" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/ntpsweep" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/ntptrace" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/ntp-wait" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/update-leap" "${PACKAGER_ROOT}/sbin/"
+cp -p "${PREFIX}/bin/ntpdc" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/bin/ntpq" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/bin/sntp" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/bin/ntpsweep" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/bin/ntptrace" "${PACKAGER_ROOT}/bin/"
 add_items_to_install_package "${PREFIX}/sbin/ntpd"
 
 return 0
@@ -1120,8 +1121,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     ./configure \
          --prefix="${PREFIX}" \
          --host="${HOST}" \
-         --bindir="${PREFIX}/sbin" \
-         --sbindir="${PREFIX}/sbin" \
+         --with-locfile=debian \
          --enable-static \
          --disable-shared \
          --enable-debugging \
@@ -1165,11 +1165,11 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     # strip and verify there are no dependencies for static build
     finalize_build "${PREFIX}/sbin/ntpd" \
                    "${PREFIX}/sbin/ntpdate" \
-                   "${PREFIX}/sbin/ntpdc" \
                    "${PREFIX}/sbin/ntp-keygen" \
-                   "${PREFIX}/sbin/ntpq" \
-                   "${PREFIX}/sbin/sntp" \
                    "${PREFIX}/sbin/tickadj"
+                   "${PREFIX}/bin/ntpdc" \
+                   "${PREFIX}/bin/ntpq" \
+                   "${PREFIX}/bin/sntp" \
 
     touch __package_installed
 fi
