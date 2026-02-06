@@ -81,9 +81,6 @@ case "${HOST_CPU}" in
         ;;
 esac
 
-#BUILD_DIR="${PARENT_DIR}/${TOOLCHAINS_SUBDIR}-build/${CROSSBUILD_SUBDIR}"
-#SRC_ROOT="${BUILD_DIR}/src/${PKG_ROOT}"
-#PACKAGER_ROOT="${BUILD_DIR}/packager/${PKG_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
 SRC_ROOT="${CROSSBUILD_DIR}/src/${PKG_ROOT}"
 PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
 
@@ -1220,7 +1217,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     export LDFLAGS="-static ${LDFLAGS}"
-    export LIBS="-lzstd -lz"
+    export LIBS="-lzstd -lz -latomic"
     export CFLAGS="${CFLAGS} -Wno-int-conversion"
 
     ./Configure linux-armv4 no-asm \
