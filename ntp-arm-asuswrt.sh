@@ -1158,14 +1158,17 @@ download_and_compile() {
 mkdir -p "${SRC_ROOT}"
 
 ################################################################################
-# libcap-2.59
+# libcap-2.26
+## libcap-2.59
 (
 PKG_NAME=libcap
-PKG_VERSION=2.59
+PKG_VERSION=2.26
+#PKG_VERSION=2.59
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
 PKG_SOURCE_URL="https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="49f64ae40b113e53cbc161e22af7094e3bb4a0611fa33ef5a4257b011779f034"
+PKG_HASH="b630b7c484271b3ba867680d6a14b10a86cfa67247a14631b14c06731d5a458b"
+#PKG_HASH="49f64ae40b113e53cbc161e22af7094e3bb4a0611fa33ef5a4257b011779f034"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}"
 cd "${SRC_ROOT}/${PKG_NAME}"
