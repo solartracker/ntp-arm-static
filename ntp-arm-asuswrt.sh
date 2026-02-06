@@ -34,13 +34,20 @@ PKG_ROOT_VERSION="4.2.8p18"
 PKG_ROOT_RELEASE=1
 PKG_TARGET_CPU=armv7
 
+# Broadcom SDK6/SDK7 ARM platform (i.e. RT-AC68U)
+# brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3
+# Linux 2.6.36.4
+# Binutils 2.21.1
+# GCC 4.53
+# uClibc 0.9.32.1
+#
 CROSSBUILD_SUBDIR="am-toolchains/brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3"
 CROSSBUILD_DIR="${PARENT_DIR}/${CROSSBUILD_SUBDIR}"
 export TARGET=arm-brcm-linux-uclibcgnueabi
 
 HOST_CPU="$(uname -m)"
 if [ "${HOST_CPU}" != "x86_64" ]; then
-    echo "Toolchain cannot be run on this host CPU: ${HOST_CPU}" >&2
+    echo "Toolchain cannot be run on this CPU: ${HOST_CPU}" >&2
     return 1
 fi
 export PREFIX="${CROSSBUILD_DIR}"
@@ -1046,21 +1053,14 @@ add_items_to_install_package()
 ################################################################################
 # Install the build environment
 # Asuswrt toolchain collection extracted from ASUS firmware source code tarballs
-# These are the toolchains used to compile Asuswrt-Merlin firmwares.
-#
-# Broadcom SDK6/SDK7 ARM platform (RT-AC68U)
-# brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3
-# Linux 2.6.36.4
-# Binutils 2.21.1
-# GCC 4.53
-# uClibc 0.9.32.1
+# These are the toolchains used to compile Asuswrt and Asuswrt-Merlin firmwares.
 #
 install_build_environment() {
 ( #BEGIN sub-shell
 PKG_NAME=am-toolchains
-PKG_VERSION="20240506235746+git"
+PKG_VERSION="20240506+git"
 PKG_SOURCE_URL="https://github.com/RMerl/am-toolchains"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}"
 PKG_SOURCE_VERSION="d1af80e6b6686a4edc680386c09a8361453dd5c1"
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-${PKG_SOURCE_VERSION}.tar.xz"
 PKG_HASH_VERIFY="full_extract"
@@ -1071,7 +1071,7 @@ if [ ! -d "${CROSSBUILD_DIR}" ]; then
     echo "Toolchain not found at ${CROSSBUILD_DIR}. Installing..."
     echo ""
     cd ${PARENT_DIR}
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_NAME}-${PKG_VERSION}"
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}" "${PKG_HASH_VERIFY}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
 fi
