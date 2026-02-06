@@ -1221,8 +1221,8 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     cd "${PKG_BUILD_SUBDIR}"
 
     ../${PKG_SOURCE_SUBDIR}/configure \
-        --target=${TARGET} \
         --prefix="${PREFIX}" \
+        --host="${HOST}" \
         --without-headers \
         --enable-languages=c \
         --disable-multilib \
@@ -1317,43 +1317,43 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     # temporarily hide shared libraries (.so) to force static ones (.a)
     hide_shared_libraries
-
+ 
     ./configure \
-         --prefix="${PREFIX}" \
-         --host="${HOST}" \
-         --with-locfile=debian \
-         --enable-static \
-         --disable-shared \
-         --enable-debugging \
-         --enable-signalled-io \
-         --enable-autokey \
-         --enable-ipv6 \
-         --enable-saveconfig \
-         --enable-linuxcaps \
-         --enable-c99-snprintf \
-         --enable-local-libopts \
-         --enable-local-libevent \
-         --enable-accurate-adjtime \
-         --with-sntp \
-         --with-lineeditlibs \
-         --with-crypto \
-         --with-openssl-libdir="${PREFIX}/lib" \
-         --with-openssl-incdir="${PREFIX}/include" \
-         --enable-verbose-ssl \
-         --enable-openssl-random \
-         --enable-thread-support \
-         --with-threads \
-         --with-yielding-select=yes \
-         --without-rpath \
-         --without-ntpsnmpd \
-         --disable-problem-tests \
-         --disable-dependency-tracking \
-         --disable-silent-rules \
-         --enable-parse-clocks \
-         --enable-NMEA --enable-ATOM --enable-SHM --enable-LOCAL-CLOCK \
-         --enable-SPECTRACOM --enable-ARBITER --enable-HPGPS \
-         --enable-TRIMBLE --enable-JJY --enable-ZYFER \
-         --enable-GPSD \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
+        --with-locfile=debian \
+        --enable-static \
+        --disable-shared \
+        --enable-debugging \
+        --enable-signalled-io \
+        --enable-autokey \
+        --enable-ipv6 \
+        --enable-saveconfig \
+        --enable-linuxcaps \
+        --enable-c99-snprintf \
+        --enable-local-libopts \
+        --enable-local-libevent \
+        --enable-accurate-adjtime \
+        --with-sntp \
+        --with-lineeditlibs \
+        --with-crypto \
+        --with-openssl-libdir="${PREFIX}/lib" \
+        --with-openssl-incdir="${PREFIX}/include" \
+        --enable-verbose-ssl \
+        --enable-openssl-random \
+        --enable-thread-support \
+        --with-threads \
+        --with-yielding-select=yes \
+        --without-rpath \
+        --without-ntpsnmpd \
+        --disable-problem-tests \
+        --disable-dependency-tracking \
+        --disable-silent-rules \
+        --enable-parse-clocks \
+        --enable-NMEA --enable-ATOM --enable-SHM --enable-LOCAL-CLOCK \
+        --enable-SPECTRACOM --enable-ARBITER --enable-HPGPS \
+        --enable-TRIMBLE --enable-JJY --enable-ZYFER \
+        --enable-GPSD \
     || handle_configure_error $?
 
     $MAKE LDFLAGS="-static -all-static ${LDFLAGS}"
