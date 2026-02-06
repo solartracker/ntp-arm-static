@@ -1197,6 +1197,55 @@ fi
 )
 
 ################################################################################
+# gcc-4.8.1 (libatomic)
+(
+PKG_NAME=gcc
+PKG_VERSION="4.8.1"
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build-libatomic"
+PKG_HASH="545b44be3ad9f2c4e90e6880f5c9d4f0a8f0e5f67e1ffb0d45da9fa01bb05813"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
+    rm -rf "$PKG_SOURCE_SUBDIR"
+    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
+    verify_hash "$PKG_SOURCE" "$PKG_HASH"
+    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
+
+    rm -rf "${PKG_BUILD_SUBDIR}"
+    mkdir "${PKG_BUILD_SUBDIR}"
+    cd "${PKG_BUILD_SUBDIR}"
+
+    ../${PKG_SOURCE_SUBDIR}/configure \
+        --target=${TARGET} \
+        --prefix="${PREFIX}" \
+        --without-headers \
+        --enable-languages=c \
+        --disable-multilib \
+        --disable-nls \
+        --disable-libssp \
+        --disable-libquadmath \
+        --disable-libgomp \
+        --disable-libsanitizer \
+        --disable-libstdcxx-pch \
+        --disable-libgcov \
+        --disable-shared \
+        --enable-static \
+        --enable-libatomic \
+    || handle_configure_error $?
+
+    $MAKE all-target-libatomic
+    make install-target-libatomic
+
+    touch __package_installed
+fi
+)
+
+################################################################################
 # openssl-3.6.0
 (
 PKG_NAME=openssl
@@ -1217,8 +1266,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     export LDFLAGS="-static ${LDFLAGS}"
-    #export LIBS="-lzstd -lz"
-    export LIBS="-ldl -pthread"
+    export LIBS="-lzstd -lz"
     export CFLAGS="${CFLAGS} -Wno-int-conversion"
 
     ./Configure linux-armv4 no-asm \
@@ -1230,8 +1278,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         enable-rc5 \
         --prefix="${PREFIX}" \
         --with-rand-seed=devrandom \
-        -DOPENSSL_PREFER_CHACHA_OVER_GCM \
-        "LIBS=-ldl -pthread"
+        -DOPENSSL_PREFER_CHACHA_OVER_GCM
 
     $MAKE
     make install
