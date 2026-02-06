@@ -811,6 +811,7 @@ unpack_archive()
 
     local source_path="$1"
     local target_dir="$2"
+    local top_dir="${target_dir%%/*}"
     local dir_tmp=""
 
     if [ ! -d "${target_dir}" ]; then
@@ -818,7 +819,7 @@ unpack_archive()
         trap 'cleanup; exit 130' INT
         trap 'cleanup; exit 143' TERM
         trap 'cleanup' EXIT
-        dir_tmp=$(mktemp -d "${target_dir}.XXXXXX")
+        dir_tmp=$(mktemp -d "${top_dir}.XXXXXX")
         mkdir -p "${dir_tmp}"
         if ! extract_package "${source_path}" "${dir_tmp}"; then
             return 1
@@ -1074,7 +1075,7 @@ if [ ! -d "${CROSSBUILD_DIR}" ]; then
     cd ${PARENT_DIR}
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "${CACHED_DIR}" "${PKG_SOURCE_VERSION}" "${PKG_NAME}-${PKG_VERSION}"
     verify_hash "${PKG_SOURCE_PATH}" "${PKG_HASH}" "${PKG_HASH_VERIFY}"
-    unpack_archive "${PKG_SOURCE_PATH}" "${CROSSBUILD_DIR}"
+    unpack_archive "${PKG_SOURCE_PATH}" "${PKG_NAME}"
 fi
 
 # Check for required toolchain tools
