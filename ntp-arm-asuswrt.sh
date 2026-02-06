@@ -1188,7 +1188,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
           inc_prefix="${PREFIX}/usr" \
           lib="lib" \
           BUILD_CC="gcc" \
-          BUILD_CPPFLAGS="-I./libcap/include"
+          BUILD_CPPFLAGS="-I./libcap/include" \
+          RAISE_SETFCAP=no
 
     make install DESTDIR="${PREFIX}" \
                  lib="lib"
