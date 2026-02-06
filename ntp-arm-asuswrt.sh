@@ -1264,7 +1264,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    export LDFLAGS="-static ${LDFLAGS}"
+    export LDFLAGS="${LDFLAGS}"
     export LIBS="-lzstd -lz"
     export CFLAGS="${CFLAGS} -Wno-int-conversion"
 
