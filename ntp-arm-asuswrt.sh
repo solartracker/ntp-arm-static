@@ -1317,9 +1317,6 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
     export LIBS="-lcap"
 
-    # temporarily hide shared libraries (.so) to force static ones (.a)
-    hide_shared_libraries
- 
     ./configure \
         --prefix="${PREFIX}" \
         --host="${HOST}" \
@@ -1360,9 +1357,6 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     $MAKE LDFLAGS="-static -all-static ${LDFLAGS}"
     make install
-
-    # restore the hidden shared libraries
-    restore_shared_libraries
 
     # strip and verify there are no dependencies for static build
     finalize_build "${PREFIX}/sbin/ntpd" \
