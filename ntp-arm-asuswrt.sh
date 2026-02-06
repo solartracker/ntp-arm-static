@@ -1064,14 +1064,14 @@ PKG_SOURCE_SUBDIR="${PKG_NAME}"
 PKG_SOURCE_VERSION="d1af80e6b6686a4edc680386c09a8361453dd5c1"
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-${PKG_SOURCE_VERSION}.tar.xz"
 PKG_HASH_VERIFY="full_extract"
-PKG_HASH=""
+PKG_HASH="503d9c176fcb38249f8d47df4c3ab7197b05cdeb25b39f9bf7e2e00354e1e04d"
 
 # Check if toolchain exists and install it, if needed
 if [ ! -d "${CROSSBUILD_DIR}" ]; then
     echo "Toolchain not found at ${CROSSBUILD_DIR}. Installing..."
     echo ""
     cd ${PARENT_DIR}
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_NAME}-${PKG_VERSION}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "${CACHED_DIR}" "${PKG_SOURCE_VERSION}" "${PKG_NAME}-${PKG_VERSION}"
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}" "${PKG_HASH_VERIFY}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
 fi
