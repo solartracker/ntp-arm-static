@@ -41,8 +41,9 @@ PKG_TARGET_CPU=armv7
 # GCC 4.53
 # uClibc 0.9.32.1
 #
-CROSSBUILD_SUBDIR="am-toolchains/brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3"
-CROSSBUILD_DIR="${PARENT_DIR}/${CROSSBUILD_SUBDIR}"
+TOOLCHAINS_SUBDIR="am-toolchains"
+CROSSBUILD_SUBDIR="brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3"
+CROSSBUILD_DIR="${PARENT_DIR}/${TOOLCHAINS_SUBDIR}/${CROSSBUILD_SUBDIR}"
 export TARGET=arm-brcm-linux-uclibcgnueabi
 
 HOST_CPU="$(uname -m)"
@@ -80,8 +81,9 @@ case "${HOST_CPU}" in
         ;;
 esac
 
-SRC_ROOT="${CROSSBUILD_DIR}/src/${PKG_ROOT}"
-PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
+BUILD_DIR="${PARENT_DIR}/${TOOLCHAINS_SUBDIR}-build/${CROSSBUILD_SUBDIR}"
+SRC_ROOT="${BUILD_DIR}/src/${PKG_ROOT}"
+PACKAGER_ROOT="${BUILD_DIR}/packager/${PKG_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
 
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #MAKE="make -j1"                                  # one job at a time
@@ -93,7 +95,6 @@ unset PKG_CONFIG_PATH
 check_dependencies
 
 install_build_environment
-return 1
 
 #create_cmake_toolchain_file
 
