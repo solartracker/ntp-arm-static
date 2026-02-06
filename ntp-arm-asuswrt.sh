@@ -1083,9 +1083,9 @@ if [ ! -x "${CROSSBUILD_DIR}/bin/${TARGET}-gcc" ]; then
     echo ""
     exit 1
 fi
-if [ ! -x "${CROSSBUILD_DIR}/${TARGET}/lib/libc.so" ]; then
+if [ ! -x "${CROSSBUILD_DIR}/${TARGET}/lib/libc.so" ] && [ ! -x "${CROSSBUILD_DIR}/lib/libc.so" ]; then
     echo "ERROR: Toolchain installation appears incomplete."
-    echo "Missing libc.so in ${CROSSBUILD_DIR}/${TARGET}/lib"
+    echo "Missing libc.so"
     echo ""
     exit 1
 fi
