@@ -1196,6 +1196,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
+if false; then
 ################################################################################
 # gcc-4.8.1 (libatomic)
 (
@@ -1244,6 +1245,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     touch __package_installed
 fi
 )
+fi
 
 ################################################################################
 # openssl-3.6.0
