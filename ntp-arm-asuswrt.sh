@@ -83,6 +83,8 @@ export PKG_CONFIG="pkg-config"
 export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
+check_dependencies
+
 install_build_environment
 return 1
 
@@ -119,6 +121,109 @@ add_items_to_install_package "${PREFIX}/sbin/ntpd"
 
 return 0
 } #END create_install_package()
+
+################################################################################
+# Host dependencies
+#
+check_dependencies() {
+set +x
+install_dependencies
+set -x
+
+return 0
+} #END check_dependencies()
+
+prompt_install_choice() {
+    echo
+    echo "Host dependencies are missing or outdated."
+    echo "Choose an action:"
+    echo "  [y] Install now"
+    echo "  [n] Do not install (abort build)"
+    echo
+
+    read -r -p "Selection [y/n]: " choice
+
+    case "$choice" in
+        y|Y)
+            return 0
+            ;;
+        n|N)
+            return 1
+            ;;
+        *)
+            echo "Invalid selection."
+            return 1
+            ;;
+    esac
+    return 0
+}
+
+install_dependencies() {
+
+    # list each package and optional minimum version
+    # example: "build-essential 12.9"
+    local dependencies=(
+        "libc6:i386"
+        "libstdc++6:i386"
+        "libelf1:i386"
+        "build-essential"
+        "binutils"
+        "bison"
+        "flex"
+        "texinfo"
+        "gawk"
+        "perl"
+        "patch"
+        "file"
+        "wget"
+        "curl"
+        "git"
+        "libgmp-dev"
+        "libmpfr-dev"
+        "libmpc-dev"
+        "libisl-dev"
+        "zlib1g-dev"
+        "cmake"
+    )
+    local to_install=()
+
+    echo "[*] Checking dependencies..."
+    for entry in "${dependencies[@]}"; do
+        local pkg min_version installed_version
+        read -r pkg min_version <<< "$entry"
+
+        if installed_version="$(dpkg-query -W -f='${Version}' "$pkg" 2>/dev/null)"; then
+            if [ -n "$min_version" ]; then
+                if dpkg --compare-versions "$installed_version" ge "$min_version"; then
+                    echo "[*] $pkg $installed_version is OK."
+                else
+                    echo "[*] $pkg $installed_version is too old (min $min_version)."
+                    to_install+=("$pkg")
+                fi
+            else
+                echo "[*] $pkg is installed."
+            fi
+        else
+            echo "[*] $pkg not installed."
+            to_install+=("$pkg")
+        fi
+    done
+
+    if [ "${#to_install[@]}" -eq 0 ]; then
+        echo "[*] All dependencies satisfied."
+        return 0
+    fi
+
+    if ! prompt_install_choice; then
+        return 1
+    fi
+
+    echo "[*] Installing dependencies: ${to_install[*]}"
+    sudo apt-get update
+    sudo apt-get install -y "${to_install[@]}"
+
+    return 0
+}
 
 ################################################################################
 # CMake toolchain file
