@@ -1245,15 +1245,17 @@ fi
 fi
 
 ################################################################################
-# gcc-4.8.1 (final)
+# gcc-8.5.0 (final)
 (
 PKG_NAME=gcc
-PKG_VERSION="4.8.1"
+PKG_VERSION="8.5.0"
+#PKG_VERSION="4.8.1"
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.bz2"
 PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build-final"
-PKG_HASH="545b44be3ad9f2c4e90e6880f5c9d4f0a8f0e5f67e1ffb0d45da9fa01bb05813"
+PKG_HASH="d308841a511bb830a6100397b0042db24ce11f642dab6ea6ee44842e5325ed50"
+#PKG_HASH="545b44be3ad9f2c4e90e6880f5c9d4f0a8f0e5f67e1ffb0d45da9fa01bb05813"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}"
 cd "${SRC_ROOT}/${PKG_NAME}"
