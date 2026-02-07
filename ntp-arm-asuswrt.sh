@@ -1194,6 +1194,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
+if false; then
 ################################################################################
 # gcc-4.8.1 (host)
 (
@@ -1250,8 +1251,8 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     touch "__package_installed"
 fi
 )
+fi
 
-if false; then
 ################################################################################
 # gcc-4.8.1 (libatomic)
 (
@@ -1281,11 +1282,27 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     mkdir "${PKG_BUILD_SUBDIR}"
     cd "${PKG_BUILD_SUBDIR}"
 
+    CROSSBUILD_DIR="${PARENT_DIR}/am-toolchains/brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3"
+    export TARGET=arm-brcm-linux-uclibcgnueabi
+    export PREFIX="${CROSSBUILD_DIR}"
+    export HOST=${TARGET}
+    export SYSROOT="${PREFIX}/${TARGET}"
+    export PATH="${PATH}:${PREFIX}/bin:${SYSROOT}/bin"
+    CROSS_PREFIX=${TARGET}-
+    export PKG_CONFIG="pkg-config"
+    export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
+    unset PKG_CONFIG_PATH
+
     unset CC AR RANLIB STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
     STRIP=strip
     READELF=readelf
+    CFLAGS_COMMON="-O2 -g"
+    export CFLAGS="${CFLAGS_COMMON} -std=gnu99"
+    export CXXFLAGS="${CFLAGS_COMMON} -std=gnu++98"
+    export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
+    export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
+
     export MAKEINFO=true
-    export CXXFLAGS="-std=gnu++98"
 
     ../${PKG_SOURCE_SUBDIR}/configure \
         --target=${TARGET} \
@@ -1313,7 +1330,6 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     touch "__package_installed"
 fi
 )
-fi
 exit 1
 
 ################################################################################
