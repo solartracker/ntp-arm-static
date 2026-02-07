@@ -1220,9 +1220,9 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     mkdir "${PKG_BUILD_SUBDIR}"
     cd "${PKG_BUILD_SUBDIR}"
 
-    #unset CC AR RANLIB STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
-    #STRIP=strip
-    #READELF=readelf
+    unset CC AR RANLIB STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
+    STRIP=strip
+    READELF=readelf
     export MAKEINFO=true
 
     ../${PKG_SOURCE_SUBDIR}/configure \
