@@ -33,6 +33,7 @@ PKG_ROOT=ntp
 PKG_ROOT_VERSION="4.2.8p18"
 PKG_ROOT_RELEASE=1
 PKG_TARGET_CPU=armv7
+PKG_TARGET_VARIANT=_asuswrt
 
 # Broadcom SDK6/SDK7 ARM platform (i.e. RT-AC68U)
 # brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3
@@ -1062,7 +1063,7 @@ add_items_to_install_package()
     local timestamp_file="$1"
     local pkg_files=""
     for fmt in gz xz; do
-        local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}.tar.${fmt}"
+        local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}${PKG_TARGET_VARIANT}.tar.${fmt}"
         local pkg_path="${CACHED_DIR}/${pkg_file}"
         local temp_path=""
         local timestamp=""
