@@ -53,7 +53,7 @@ if [ "${HOST_CPU}" != "x86_64" ]; then
 fi
 export PREFIX="${CROSSBUILD_DIR}"
 export HOST=${TARGET}
-export SYSROOT="${PREFIX}/${TARGET}"
+export SYSROOT="${PREFIX}/${TARGET}/sysroot"
 PATH_ORIG="${PATH}"
 export PATH="${PATH}:${PREFIX}/bin:${SYSROOT}/bin"
 
@@ -1286,7 +1286,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     export TARGET=arm-brcm-linux-uclibcgnueabi
     export PREFIX="${CROSSBUILD_DIR}"
     export HOST=${TARGET}
-    export SYSROOT="${PREFIX}/${TARGET}"
+    export SYSROOT="${PREFIX}/${TARGET}/sysroot"
     export PATH="${PATH}:${PREFIX}/bin:${SYSROOT}/bin"
     CROSS_PREFIX=${TARGET}-
     export PKG_CONFIG="pkg-config"
