@@ -1191,6 +1191,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     # force static linking of this; library does not exist on target device
     rm -f "${PREFIX}/lib/libcap.so"*
+    rm -f "${PREFIX}/lib/libpsx.so"*
 
     touch __package_installed
 fi
