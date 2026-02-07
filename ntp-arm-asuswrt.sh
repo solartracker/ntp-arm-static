@@ -1329,7 +1329,8 @@ fi
 PKG_NAME=ntp
 PKG_VERSION="4.2.8p18"
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-PKG_SOURCE_URL="https://downloads.nwtime.org/ntp/${PKG_SOURCE}"
+#PKG_SOURCE_URL="https://downloads.nwtime.org/ntp/${PKG_SOURCE}"
+PKG_SOURCE_URL="https://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_HASH="cf84c5f3fb1a295284942624d823fffa634144e096cfc4f9969ac98ef5f468e5"
 
@@ -1345,7 +1346,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker" "."
 
-    export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
+    export CPPFLAGS="-DN_PPS=18 -I${PREFIX}/usr/include ${CPPFLAGS}"
     export LIBS="-lcap"
 
     ./configure \
