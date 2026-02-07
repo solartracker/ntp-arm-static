@@ -1193,59 +1193,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
-if false; then
 ################################################################################
 # gcc-4.8.1 (libatomic)
-(
-PKG_NAME=gcc
-PKG_VERSION="4.8.1"
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.bz2"
-PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build-libatomic"
-PKG_HASH="545b44be3ad9f2c4e90e6880f5c9d4f0a8f0e5f67e1ffb0d45da9fa01bb05813"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}"
-cd "${SRC_ROOT}/${PKG_NAME}"
-
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    rm -rf "$PKG_SOURCE_SUBDIR"
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-
-    rm -rf "${PKG_BUILD_SUBDIR}"
-    mkdir "${PKG_BUILD_SUBDIR}"
-    cd "${PKG_BUILD_SUBDIR}"
-
-    ../${PKG_SOURCE_SUBDIR}/configure \
-        --prefix="${PREFIX}" \
-        --host="${HOST}" \
-        --without-headers \
-        --enable-languages=c \
-        --disable-multilib \
-        --disable-nls \
-        --disable-libssp \
-        --disable-libquadmath \
-        --disable-libgomp \
-        --disable-libsanitizer \
-        --disable-libstdcxx-pch \
-        --disable-libgcov \
-        --disable-shared \
-        --enable-static \
-        --enable-libatomic \
-    || handle_configure_error $?
-
-    $MAKE all-target-libatomic
-    make install-target-libatomic
-
-    touch __package_installed
-fi
-)
-fi
-
-################################################################################
-# gcc-4.8.1
 (
 PKG_NAME=gcc
 #PKG_VERSION="8.5.0"
@@ -1280,13 +1229,16 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     unset CXXFLAGS
     unset LDFLAGS
     unset CPPFLAGS
+
     STRIP=strip
     READELF=readelf
+
     #STAGE_DIR_NAME="stage"
     #STAGE="${PREFIX}/${STAGE_DIR_NAME}"
     #mkdir -p "${STAGE}"
 
     export MAKEINFO=true
+    export CXXCLAGS="-std=c++98"
 
     ../${PKG_SOURCE_SUBDIR}/configure \
         --target=${TARGET} \
