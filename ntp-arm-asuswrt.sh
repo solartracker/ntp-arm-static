@@ -1307,7 +1307,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --enable-cxx-flags='-march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux' \
     || handle_configure_error $?
 
-    make CXXFLAGS="-std=gnu++98" all-target-libatomic
+    $MAKE CXXFLAGS="${CXXFLAGS}" all-target-libatomic
     make install-target-libatomic
 
     touch "__package_installed"
