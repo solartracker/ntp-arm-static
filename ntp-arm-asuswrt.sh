@@ -1297,8 +1297,8 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --enable-cxx-flags='-march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux' \
     || handle_configure_error $?
 
-    $MAKE
-    make install
+    $MAKE all-gcc all-target-libgcc
+    make install-gcc install-target-libgcc
 
     touch "__package_installed"
 fi
