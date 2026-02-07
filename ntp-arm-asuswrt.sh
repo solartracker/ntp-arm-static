@@ -1293,12 +1293,15 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --disable-multilib \
         --disable-nls \
         --disable-libsanitizer \
+        --disable-docs \
         --with-arch=armv7-a --with-tune=cortex-a9 --with-float=soft --with-abi=aapcs-linux \
         --enable-cxx-flags='-march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux' \
     || handle_configure_error $?
 
-    $MAKE all-gcc all-target-libgcc
-    make install-gcc install-target-libgcc
+    #$MAKE all-gcc all-target-libgcc
+    #make install-gcc install-target-libgcc
+    $MAKE
+    make install
 
     touch "__package_installed"
 fi
