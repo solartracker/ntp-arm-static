@@ -1309,9 +1309,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     $MAKE
     make install
 
-    # strip and verify there are no dependencies for static build
-    finalize_build "${PREFIX}/bin/openssl"
-
     touch __package_installed
 fi
 )
@@ -1346,7 +1343,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --host="${HOST}" \
         --with-locfile=debian \
         --enable-static \
-        --disable-shared \
+        --enable-shared \
         --enable-debugging \
         --enable-signalled-io \
         --enable-autokey \
@@ -1379,17 +1376,8 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --enable-GPSD \
     || handle_configure_error $?
 
-    $MAKE LDFLAGS="-static -all-static ${LDFLAGS}"
+    $MAKE LDFLAGS="${LDFLAGS}"
     make install
-
-    # strip and verify there are no dependencies for static build
-    finalize_build "${PREFIX}/sbin/ntpd" \
-                   "${PREFIX}/sbin/ntpdate" \
-                   "${PREFIX}/sbin/ntp-keygen" \
-                   "${PREFIX}/sbin/tickadj" \
-                   "${PREFIX}/bin/ntpdc" \
-                   "${PREFIX}/bin/ntpq" \
-                   "${PREFIX}/bin/sntp"
 
     touch __package_installed
 fi
