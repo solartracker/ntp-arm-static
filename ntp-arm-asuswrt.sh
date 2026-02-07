@@ -1239,9 +1239,8 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     CFLAGS_COMMON="-O2 -g"
     export CFLAGS="${CFLAGS_COMMON} -std=gnu99"
     export CXXFLAGS="${CFLAGS_COMMON} -std=gnu++98"
-    export LDFLAGS="-L${SYSROOT}/lib -L${SYSROOT}/usr/lib"
-    export CPPFLAGS="-I${SYSROOT}/include -I${SYSROOT}/usr/include"
-    #export CC="${CROSS_PREFIX}gcc --sysroot=${SYSROOT}"
+    export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
+    export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
 
     export MAKEINFO=true
 
