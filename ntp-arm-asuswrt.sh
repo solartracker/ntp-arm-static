@@ -1245,6 +1245,8 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --prefix="${PREFIX}" \
         --with-sysroot="${SYSROOT}" \
         --enable-languages=c,c++ \
+        --enable-threads \
+        --enable-shared \
         --disable-bootstrap \
         --disable-multilib \
         --disable-libmudflap \
@@ -1253,8 +1255,6 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --disable-libgomp \
         --disable-libquadmath \
         --disable-libstdcxx-pch \
-        --disable-shared \
-        --disable-threads \
         --enable-target-optspace \
         --with-arch=armv7-a --with-tune=cortex-a9 --with-float=soft --with-abi=aapcs-linux \
         --enable-cxx-flags='-march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux' \
