@@ -1,0 +1,12 @@
+diff -r -u a/gcc/reload1.c b/gcc/reload1.c
+--- a/gcc/reload1.c	2013-01-21 09:55:05.000000000 -0500
++++ b/gcc/reload1.c	2026-02-07 04:54:57.985983651 -0500
+@@ -440,7 +440,7 @@
+ 
+   while (memory_address_p (QImode, tem))
+     {
+-      spill_indirect_levels++;
++      (*((unsigned char *)&spill_indirect_levels))++;
+       tem = gen_rtx_MEM (Pmode, tem);
+     }
+ 

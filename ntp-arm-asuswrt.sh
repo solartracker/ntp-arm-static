@@ -1216,6 +1216,8 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     verify_hash "$PKG_SOURCE" "$PKG_HASH"
     unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
 
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/gcc-4.8.1/solartracker" "${PKG_SOURCE_SUBDIR}"
+
     rm -rf "${PKG_BUILD_SUBDIR}"
     mkdir "${PKG_BUILD_SUBDIR}"
     cd "${PKG_BUILD_SUBDIR}"
