@@ -1267,6 +1267,9 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     $MAKE CXXFLAGS="${CXXFLAGS}" all-target-libatomic
     make install-target-libatomic
 
+    # need to force static linking of this because it's not on the target device
+    rm -f "${CROSSBUILD_DIR}/${TARGET}/lib/libatomic.so"*
+
     touch "__package_installed"
 fi
 )
