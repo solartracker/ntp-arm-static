@@ -1194,7 +1194,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
-if false; then
 ################################################################################
 # gcc-4.8.1 (host)
 (
@@ -1231,6 +1230,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     mkdir -p "${PREFIX}"
     export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
     export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
+    export CXXFLAGS="-std=gnu++98"
 
     export MAKEINFO=true
 
@@ -1244,14 +1244,14 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --disable-libssp \
     || handle_configure_error $?
 
-    $MAKE
+    $MAKE CXXFLAGS="-std=gnu++98"
     make install
 
     touch "__package_installed"
 fi
 )
-fi
 
+if false; then
 ################################################################################
 # gcc-4.8.1 (libatomic)
 (
@@ -1313,6 +1313,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     touch "__package_installed"
 fi
 )
+fi
 exit 1
 
 ################################################################################
