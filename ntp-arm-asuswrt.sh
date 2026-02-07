@@ -1220,9 +1220,9 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     mkdir "${PKG_BUILD_SUBDIR}"
     cd "${PKG_BUILD_SUBDIR}"
 
-    unset CC AR RANLIB STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
-    STRIP=strip
-    READELF=readelf
+    #unset CC AR RANLIB STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
+    #STRIP=strip
+    #READELF=readelf
     export MAKEINFO=true
 
     ../${PKG_SOURCE_SUBDIR}/configure \
@@ -1242,7 +1242,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --disable-libstdcxx-pch \
         --enable-target-optspace \
         --with-arch=armv7-a --with-tune=cortex-a9 --with-float=soft --with-abi=aapcs-linux \
-        --enable-cxx-flags='-fpermissive -std=gnu++98 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux' \
+        --enable-cxx-flags='-march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux' \
     || handle_configure_error $?
 
     make all-target-libatomic
