@@ -51,11 +51,11 @@ if [ "${HOST_CPU}" != "x86_64" ]; then
     echo "Toolchain cannot be run on this CPU: ${HOST_CPU}" >&2
     return 1
 fi
-export PREFIX="${CROSSBUILD_DIR}"
+export SYSROOT="${CROSSBUILD_DIR}/${TARGET}/sysroot"
+export PREFIX="${SYSROOT}"
 export HOST=${TARGET}
-export SYSROOT="${PREFIX}/${TARGET}/sysroot"
 PATH_ORIG="${PATH}"
-export PATH="${PATH}:${PREFIX}/bin:${SYSROOT}/bin"
+export PATH="${PATH}:${CROSSBUILD_DIR}/bin:${CROSSBUILD_DIR}/${TARGET}/bin"
 
 CROSS_PREFIX=${TARGET}-
 export CC=${CROSS_PREFIX}gcc
@@ -1184,7 +1184,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
           lib="lib" \
           BUILD_CC="gcc" \
           BUILD_CPPFLAGS="-I./libcap/include"
-          
 
     make install DESTDIR="${PREFIX}" \
                  lib="lib" \
@@ -1193,65 +1192,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-
-if false; then
-################################################################################
-# gcc-4.8.1 (host)
-(
-PKG_NAME=gcc
-PKG_VERSION="4.8.1"
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.bz2"
-PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build"
-PKG_HASH="545b44be3ad9f2c4e90e6880f5c9d4f0a8f0e5f67e1ffb0d45da9fa01bb05813"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}"
-cd "${SRC_ROOT}/${PKG_NAME}"
-
-if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
-    rm -rf "$PKG_SOURCE_SUBDIR"
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-
-    #apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/gcc-4.8.1/solartracker" "${PKG_SOURCE_SUBDIR}"
-
-    rm -rf "${PKG_BUILD_SUBDIR}"
-    mkdir "${PKG_BUILD_SUBDIR}"
-    cd "${PKG_BUILD_SUBDIR}"
-
-    export PATH="${PATH_ORIG}"
-    unset TARGET HOST SYSROOT CROSS_PREFIX CC AR RANLIB STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS PKG_CONFIG PKG_CONFIG_LIBDIR PKG_CONFIG_PATH
-    STRIP=strip
-    READELF=readelf
-
-    STAGE_SUBDIR="stage"
-    export PREFIX="${CROSSBUILD_DIR}/${STAGE_SUBDIR}"
-    mkdir -p "${PREFIX}"
-    export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
-    export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
-    export CXXFLAGS="-std=gnu++98"
-
-    export MAKEINFO=true
-
-    ../${PKG_SOURCE_SUBDIR}/configure \
-        --prefix="${PREFIX}" \
-        --disable-multilib \
-        --enable-languages=c,c++ \
-        --disable-bootstrap \
-        --disable-libstdcxx-pch \
-        --disable-libmudflap \
-        --disable-libssp \
-    || handle_configure_error $?
-
-    $MAKE CXXFLAGS="-std=gnu++98"
-    make install
-
-    touch "__package_installed"
-fi
-)
-fi
 
 ################################################################################
 # gcc-4.8.1 (libatomic)
