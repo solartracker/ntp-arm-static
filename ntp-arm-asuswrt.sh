@@ -1189,6 +1189,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
                  lib="lib" \
                  RAISE_SETFCAP="no"
 
+    # force static linking of this; library does not exist on target device
+    rm -f "${PREFIX}/lib/libcap.so"*
+
     touch __package_installed
 fi
 )
@@ -1267,7 +1270,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     $MAKE CXXFLAGS="${CXXFLAGS}" all-target-libatomic
     make install-target-libatomic
 
-    # need to force static linking of this because it's not on the target device
+    # force static linking of this; library does not exist on target device
     rm -f "${CROSSBUILD_DIR}/${TARGET}/lib/libatomic.so"*
 
     touch "__package_installed"
@@ -1294,12 +1297,12 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    export LDFLAGS="${LDFLAGS}"
+    export LDFLAGS="-static ${LDFLAGS}"
     export LIBS="-lzstd -lz"
     export CFLAGS="${CFLAGS} -Wno-int-conversion"
 
     ./Configure linux-armv4 no-asm \
-        enable-zlib enable-zstd enable-shared \
+        enable-zlib enable-zstd no-shared \
         no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
         no-err no-async \
         no-aria no-sm2 no-sm3 no-sm4 \
@@ -1311,6 +1314,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     $MAKE
     make install
+
+    # strip and verify there are no dependencies for static build
+    finalize_build "${PREFIX}/bin/openssl"
 
     touch __package_installed
 fi
@@ -1346,7 +1352,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --host="${HOST}" \
         --with-locfile=debian \
         --enable-static \
-        --enable-shared \
+        --disable-shared \
         --enable-debugging \
         --enable-signalled-io \
         --enable-autokey \
@@ -1379,8 +1385,17 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --enable-GPSD \
     || handle_configure_error $?
 
-    $MAKE LDFLAGS="${LDFLAGS}"
+    $MAKE LDFLAGS="-static -all-static ${LDFLAGS}"
     make install
+
+    # strip and verify there are no dependencies for static build
+    finalize_build "${PREFIX}/sbin/ntpd" \
+                   "${PREFIX}/sbin/ntpdate" \
+                   "${PREFIX}/sbin/ntp-keygen" \
+                   "${PREFIX}/sbin/tickadj" \
+                   "${PREFIX}/bin/ntpdc" \
+                   "${PREFIX}/bin/ntpq" \
+                   "${PREFIX}/bin/sntp"
 
     touch __package_installed
 fi
