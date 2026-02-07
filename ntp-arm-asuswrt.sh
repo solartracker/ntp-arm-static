@@ -1199,10 +1199,11 @@ fi
 PKG_NAME=gcc
 #PKG_VERSION="8.5.0"
 PKG_VERSION="4.8.1"
+#PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.bz2"
 PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build-final"
+PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build-target"
 #PKG_HASH="d308841a511bb830a6100397b0042db24ce11f642dab6ea6ee44842e5325ed50"
 PKG_HASH="545b44be3ad9f2c4e90e6880f5c9d4f0a8f0e5f67e1ffb0d45da9fa01bb05813"
 
@@ -1238,22 +1239,29 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     #mkdir -p "${STAGE}"
 
     export MAKEINFO=true
-    export CXXCLAGS="-std=c++98"
 
     ../${PKG_SOURCE_SUBDIR}/configure \
         --target=${TARGET} \
         --prefix="${PREFIX}" \
         --with-sysroot="${SYSROOT}" \
         --enable-languages=c,c++ \
-        --enable-shared \
+        --disable-bootstrap \
         --disable-multilib \
+        --disable-libmudflap \
+        --disable-libssp \
         --disable-nls \
-        --disable-libsanitizer \
+        --disable-libgomp \
+        --disable-libquadmath \
+        --disable-libstdcxx-pch \
+        --disable-shared \
+        --disable-threads \
+        --enable-target-optspace \
         --with-arch=armv7-a --with-tune=cortex-a9 --with-float=soft --with-abi=aapcs-linux \
         --enable-cxx-flags='-march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux' \
     || handle_configure_error $?
 
-    make all-gcc all-target-libgcc all-target-libatomic
+    make all-target-libatomic
+    make install-target-libatomic
 
     touch "__package_installed"
 fi
