@@ -1194,6 +1194,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
+if false; then
 ################################################################################
 # gcc-4.8.1 (host)
 (
@@ -1249,8 +1250,8 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     touch "__package_installed"
 fi
 )
+fi
 
-if false; then
 ################################################################################
 # gcc-4.8.1 (libatomic)
 (
@@ -1284,6 +1285,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     STRIP=strip
     READELF=readelf
     export MAKEINFO=true
+    export CXXFLAGS="-std=gnu++98"
 
     ../${PKG_SOURCE_SUBDIR}/configure \
         --target=${TARGET} \
@@ -1305,13 +1307,12 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --enable-cxx-flags='-march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux' \
     || handle_configure_error $?
 
-    make all-target-libatomic
+    make CXXFLAGS="-std=gnu++98" all-target-libatomic
     make install-target-libatomic
 
     touch "__package_installed"
 fi
 )
-fi
 exit 1
 
 ################################################################################
