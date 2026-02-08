@@ -1179,7 +1179,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    export CFLAGS="-static ${CFLAGS}"
+    export CFLAGS="-static -all-static ${CFLAGS}"
 
     $MAKE
     make install DESTDIR="${PREFIX}"
