@@ -1401,8 +1401,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker/102-locfile-noinst.patch" "."
 
-    #export CPPFLAGS="-DN_PPS=18 -I${PREFIX}/usr/include ${CPPFLAGS}"
-    export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
+    export CPPFLAGS="-DN_PPS=18 -I${PREFIX}/usr/include ${CPPFLAGS}"
     export LIBS="-lcap"
 
     is_debug() { contains "${PKG_TARGET_VARIANT}" "debug"; }
