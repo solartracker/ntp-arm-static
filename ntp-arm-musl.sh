@@ -1238,7 +1238,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     # temporarily hide shared libraries (.so) to force static ones (.a)
     hide_shared_libraries
 
-    is_debug() { contains "${PKG_TARGET_VARIANT}" "debug" }
+    is_debug() { contains "${PKG_TARGET_VARIANT}" "debug"; }
 
     ./configure \
          --prefix="${PREFIX}" \
