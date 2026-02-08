@@ -34,6 +34,7 @@ PKG_ROOT_VERSION="4.2.8p18"
 PKG_ROOT_RELEASE=1
 PKG_TARGET_CPU=armv7
 PKG_TARGET_VARIANT=_asuswrt
+#PKG_TARGET_VARIANT=_asuswrt+debug
 
 # Broadcom SDK6/SDK7 ARM platform (i.e. RT-AC68U)
 # brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3
@@ -114,6 +115,7 @@ create_install_package() {
 rm -rf "${PACKAGER_ROOT}"
 mkdir -p "${PACKAGER_ROOT}/sbin"
 mkdir -p "${PACKAGER_ROOT}/bin"
+mkdir -p "${PACKAGER_ROOT}/usr/bin"
 cp -p "${PREFIX}/sbin/ntpd" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/ntpdate" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/ntp-keygen" "${PACKAGER_ROOT}/sbin/"
@@ -126,6 +128,11 @@ cp -p "${PREFIX}/bin/ntpq" "${PACKAGER_ROOT}/bin/"
 cp -p "${PREFIX}/bin/sntp" "${PACKAGER_ROOT}/bin/"
 cp -p "${PREFIX}/bin/ntpsweep" "${PACKAGER_ROOT}/bin/"
 cp -p "${PREFIX}/bin/ntptrace" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/usr/bin/ppsfind" "${PACKAGER_ROOT}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppstest" "${PACKAGER_ROOT}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppsctl" "${PACKAGER_ROOT}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppswatch" "${PACKAGER_ROOT}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppsldisc" "${PACKAGER_ROOT}/usr/bin/"
 add_items_to_install_package "${PREFIX}/sbin/ntpd"
 
 return 0
@@ -929,6 +936,15 @@ get_latest_package() {
     return 0
 }
 
+enable_options() {
+    [ -n "$1" ] || return 1
+    [ -n "$2" ] || return 1
+    local p n
+    $2 && p=enable || p=disable
+    for n in $1; do printf -- "--%s-%s " "$p" "$n"; done
+    return 0
+}
+
 contains() {
     haystack=$1
     needle=$2
@@ -1325,6 +1341,43 @@ fi
 )
 
 ################################################################################
+# pps-tools-1.0.3
+(
+PKG_NAME=pps-tools
+PKG_VERSION=1.0.3
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://github.com/redlab-i/pps-tools/archive/refs/tags/v${PKG_VERSION}.tar.gz"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="89163e29f1a4a0a702bbe25b900fd37d2eb86442329cefee58847e57e1964d7a"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    export LDFLAGS="-static ${LDFLAGS}"
+
+    $MAKE
+    make install DESTDIR="${PREFIX}"
+
+    # NTP configure checks both locations; put it in both places just in case
+    cp -p "${PREFIX}/usr/include/sys/timepps.h" "${PREFIX}/usr/include/"
+
+    finalize_build "${PREFIX}/usr/bin/ppstest" \
+                   "${PREFIX}/usr/bin/ppsctl" \
+                   "${PREFIX}/usr/bin/ppswatch" \
+                   "${PREFIX}/usr/bin/ppsldisc"
+
+    touch __package_installed
+fi
+)
+
+################################################################################
 # ntp-4.2.8p18
 (
 PKG_NAME=ntp
@@ -1345,10 +1398,13 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
     cd "$PKG_SOURCE_SUBDIR"
 
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker" "."
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker/102-locfile-noinst.patch" "."
 
-    export CPPFLAGS="-DN_PPS=18 -I${PREFIX}/usr/include ${CPPFLAGS}"
+    #export CPPFLAGS="-DN_PPS=18 -I${PREFIX}/usr/include ${CPPFLAGS}"
+    export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
     export LIBS="-lcap"
+
+    is_debug() { contains "${PKG_TARGET_VARIANT}" "debug"; }
 
     ./configure \
         --prefix="${PREFIX}" \
@@ -1356,7 +1412,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --with-locfile=debian \
         --enable-static \
         --disable-shared \
-        --disable-debugging \
+        $(enable_options "debugging" is_debug) \
         --enable-signalled-io \
         --enable-autokey \
         --enable-ipv6 \
