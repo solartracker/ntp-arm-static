@@ -1179,13 +1179,12 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    export CFLAGS="-static -all-static ${CFLAGS}"
+    export LDFLAGS="-static ${LDFLAGS}"
 
     $MAKE
     make install DESTDIR="${PREFIX}"
 
-    finalize_build "${PREFIX}/usr/bin/ppsfind" \
-                   "${PREFIX}/usr/bin/ppstest" \
+    finalize_build "${PREFIX}/usr/bin/ppstest" \
                    "${PREFIX}/usr/bin/ppsctl" \
                    "${PREFIX}/usr/bin/ppswatch" \
                    "${PREFIX}/usr/bin/ppsldisc"
@@ -1193,7 +1192,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-exit 1
 
 ################################################################################
 # ntp-4.2.8p18
