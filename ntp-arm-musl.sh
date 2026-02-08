@@ -34,6 +34,7 @@ PKG_ROOT_VERSION="4.2.8p18"
 PKG_ROOT_RELEASE=1
 PKG_TARGET_CPU=armv7
 PKG_TARGET_VARIANT=_musl
+#PKG_TARGET_VARIANT=_musl+debug
 
 CROSSBUILD_SUBDIR="cross-arm-linux-musleabi-build"
 CROSSBUILD_DIR="${PARENT_DIR}/${CROSSBUILD_SUBDIR}"
@@ -817,6 +818,15 @@ get_latest_package() {
     return 0
 }
 
+enable_options() {
+    [ -n "$1" ] || return 1
+    [ -n "$2" ] || return 1
+    local p n
+    $2 && p=enable || p=disable
+    for n in $1; do printf -- "--%s-%s " "$p" "$n"; done
+    return 0
+}
+
 contains() {
     haystack=$1
     needle=$2
@@ -1228,13 +1238,15 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     # temporarily hide shared libraries (.so) to force static ones (.a)
     hide_shared_libraries
 
+    is_debug() { contains "${PKG_TARGET_VARIANT}" "debug" }
+
     ./configure \
          --prefix="${PREFIX}" \
          --host="${HOST}" \
          --with-locfile=debian \
          --enable-static \
          --disable-shared \
-         --enable-debugging \
+         $(enable_options "debugging" $(is_debug)) \
          --enable-signalled-io \
          --enable-autokey \
          --enable-ipv6 \
