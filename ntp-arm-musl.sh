@@ -30,7 +30,7 @@ set -x
 
 main() {
 PKG_ROOT=ntp
-PKG_ROOT_VERSION="4.2.8p17"
+PKG_ROOT_VERSION="4.2.8p18"
 PKG_ROOT_RELEASE=1
 PKG_TARGET_CPU=armv7
 PKG_TARGET_VARIANT=_musl
@@ -1184,7 +1184,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     $MAKE
     make install DESTDIR="${PREFIX}"
 
-    # NTP configure checks both locations
+    # NTP configure checks both locations; put it in both places just in case
     cp -p "${PREFIX}/usr/include/sys/timepps.h" "${PREFIX}/usr/include/"
 
     finalize_build "${PREFIX}/usr/bin/ppstest" \
@@ -1198,17 +1198,16 @@ fi
 
 ################################################################################
 # ntp-4.2.8p18
-# ntp-4.2.8p17 <---
 (
 PKG_NAME=ntp
-#PKG_VERSION="4.2.8p18"
-PKG_VERSION="4.2.8p17"
+PKG_VERSION="4.2.8p18"
+#PKG_VERSION="4.2.8p17"
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
 #PKG_SOURCE_URL="https://downloads.nwtime.org/ntp/${PKG_SOURCE}"
 PKG_SOURCE_URL="https://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-#PKG_HASH="cf84c5f3fb1a295284942624d823fffa634144e096cfc4f9969ac98ef5f468e5"
-PKG_HASH="103dd272e6a66c5b8df07dce5e9a02555fcd6f1397bdfb782237328e89d3a866"
+PKG_HASH="cf84c5f3fb1a295284942624d823fffa634144e096cfc4f9969ac98ef5f468e5"
+#PKG_HASH="103dd272e6a66c5b8df07dce5e9a02555fcd6f1397bdfb782237328e89d3a866"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}"
 cd "${SRC_ROOT}/${PKG_NAME}"
