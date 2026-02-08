@@ -1184,6 +1184,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     $MAKE
     make install DESTDIR="${PREFIX}"
 
+    # NTP configure checks both locations
+    cp -p "${PREFIX}/usr/include/sys/timepps.h" "${PREFIX}/usr/include/"
+
     finalize_build "${PREFIX}/usr/bin/ppstest" \
                    "${PREFIX}/usr/bin/ppsctl" \
                    "${PREFIX}/usr/bin/ppswatch" \
