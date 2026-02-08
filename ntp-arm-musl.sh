@@ -1246,7 +1246,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
          --with-locfile=debian \
          --enable-static \
          --disable-shared \
-         $(enable_options "debugging" $(is_debug)) \
+         $(enable_options "debugging" is_debug) \
          --enable-signalled-io \
          --enable-autokey \
          --enable-ipv6 \
