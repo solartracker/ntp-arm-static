@@ -1360,6 +1360,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
+    export CPPFLAGS="-DN_PPS=18 -I${PREFIX}/usr/include ${CPPFLAGS}"
     export LDFLAGS="-static ${LDFLAGS}"
 
     $MAKE
