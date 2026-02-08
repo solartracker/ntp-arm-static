@@ -99,6 +99,7 @@ create_install_package() {
 rm -rf "${PACKAGER_ROOT}"
 mkdir -p "${PACKAGER_ROOT}/sbin"
 mkdir -p "${PACKAGER_ROOT}/bin"
+mkdir -p "${PACKAGER_ROOT}/usr/bin"
 cp -p "${PREFIX}/sbin/ntpd" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/ntpdate" "${PACKAGER_ROOT}/sbin/"
 cp -p "${PREFIX}/sbin/ntp-keygen" "${PACKAGER_ROOT}/sbin/"
@@ -111,6 +112,11 @@ cp -p "${PREFIX}/bin/ntpq" "${PACKAGER_ROOT}/bin/"
 cp -p "${PREFIX}/bin/sntp" "${PACKAGER_ROOT}/bin/"
 cp -p "${PREFIX}/bin/ntpsweep" "${PACKAGER_ROOT}/bin/"
 cp -p "${PREFIX}/bin/ntptrace" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/usr/bin/ppsfind" "${PACKAGER_ROOT}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppstest" "${PACKAGER_ROOT}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppsctl" "${PACKAGER_ROOT}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppswatch" "${PACKAGER_ROOT}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppsldisc" "${PACKAGER_ROOT}/usr/bin/"
 add_items_to_install_package "${PREFIX}/sbin/ntpd"
 
 return 0
@@ -1154,6 +1160,42 @@ fi
 )
 
 ################################################################################
+# pps-tools-1.0.3
+(
+PKG_NAME=pps-tools
+PKG_VERSION=1.0.3
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://github.com/redlab-i/pps-tools/archive/refs/tags/v${PKG_VERSION}.tar.gz"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="89163e29f1a4a0a702bbe25b900fd37d2eb86442329cefee58847e57e1964d7a"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    export CFLAGS="-static ${CFLAGS}"
+
+    $MAKE
+    make install DESTDIR="${PREFIX}"
+
+    finalize_build "${PREFIX}/usr/bin/ppsfind" \
+                   "${PREFIX}/usr/bin/ppstest" \
+                   "${PREFIX}/usr/bin/ppsctl" \
+                   "${PREFIX}/usr/bin/ppswatch" \
+                   "${PREFIX}/usr/bin/ppsldisc"
+
+    touch __package_installed
+fi
+)
+exit 1
+
+################################################################################
 # ntp-4.2.8p18
 # ntp-4.2.8p17 <---
 (
@@ -1179,6 +1221,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker" "."
 
+    #export CPPFLAGS="-DN_PPS=18 -I${PREFIX}/usr/include ${CPPFLAGS}"
     export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
     export LIBS="-lcap"
 
