@@ -133,6 +133,7 @@ cp -p "${PREFIX}/usr/bin/ppstest" "${PACKAGER_ROOT}/usr/bin/"
 cp -p "${PREFIX}/usr/bin/ppsctl" "${PACKAGER_ROOT}/usr/bin/"
 cp -p "${PREFIX}/usr/bin/ppswatch" "${PACKAGER_ROOT}/usr/bin/"
 cp -p "${PREFIX}/usr/bin/ppsldisc" "${PACKAGER_ROOT}/usr/bin/"
+cp -p "${PREFIX}/bin/openssl" "${PACKAGER_ROOT}/bin/"
 add_items_to_install_package "${PREFIX}/sbin/ntpd"
 
 return 0
