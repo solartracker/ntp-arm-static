@@ -1243,8 +1243,8 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     STRIP=strip
     READELF=readelf
     CFLAGS_COMMON="-O2 -g -Wno-implicit-fallthrough -Wno-unused-value -Wno-switch-bool -Wno-expansion-to-defined -Wno-format-security -Wno-unused-result -Wno-strict-aliasing"
-    export CFLAGS="-std=gnu99 ${CFLAGS_COMMON}"
-    export CXXFLAGS="-std=gnu++98 -Wno-c++11-compat -Wno-pointer-sign ${CFLAGS_COMMON}"
+    export CFLAGS="-std=gnu99 -Wno-pointer-sign ${CFLAGS_COMMON}"
+    export CXXFLAGS="-std=gnu++98 -Wno-c++11-compat ${CFLAGS_COMMON}"
     export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
     export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
 
