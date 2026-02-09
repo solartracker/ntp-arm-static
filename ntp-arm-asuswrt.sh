@@ -1242,9 +1242,9 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     unset CC AR RANLIB STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
     STRIP=strip
     READELF=readelf
-    CFLAGS_COMMON="-O2 -g"
+    CFLAGS_COMMON="-O2 -g -Wall -Wextra -Wno-c++11-compat -Wno-implicit-fallthrough -Wno-unused-value -Wno-switch-bool -Wno-expansion-to-defined -Wno-format-security -Wno-unused-result -Wno-pointer-sign -Wno-strict-aliasing"
     export CFLAGS="${CFLAGS_COMMON} -std=gnu99"
-    export CXXFLAGS="${CFLAGS_COMMON} -std=gnu++98 -Wno-pedantic"
+    export CXXFLAGS="${CFLAGS_COMMON} -std=gnu++98 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux"
     export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
     export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
 
@@ -1268,7 +1268,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --disable-libstdcxx-pch \
         --enable-target-optspace \
         --with-arch=armv7-a --with-tune=cortex-a9 --with-float=soft --with-abi=aapcs-linux \
-        --enable-cxx-flags='-std=gnu++98 -Wno-pedantic -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux' \
+        --enable-cxx-flags="${CXXFLAGS}" \
     || handle_configure_error $?
 
     $MAKE CXXFLAGS="${CXXFLAGS}" all-target-libatomic
