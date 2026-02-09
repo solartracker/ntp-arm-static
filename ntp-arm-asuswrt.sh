@@ -1242,7 +1242,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     unset CC AR RANLIB STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
     STRIP=strip
     READELF=readelf
-    CFLAGS_COMMON="-O2 -g -Wall -Wextra -Wno-implicit-fallthrough -Wno-unused-value -Wno-switch-bool -Wno-expansion-to-defined -Wno-format-security -Wno-unused-result -Wno-pointer-sign -Wno-strict-aliasing"
+    CFLAGS_COMMON="-O2 -g -Wno-implicit-fallthrough -Wno-unused-value -Wno-switch-bool -Wno-expansion-to-defined -Wno-format-security -Wno-unused-result -Wno-pointer-sign -Wno-strict-aliasing"
     export CFLAGS="-std=gnu99 ${CFLAGS_COMMON}"
     export CXXFLAGS="-std=gnu++98 -Wno-c++11-compat ${CFLAGS_COMMON} -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux"
     export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
