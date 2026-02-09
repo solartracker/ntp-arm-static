@@ -1212,13 +1212,10 @@ fi
 (
 PKG_NAME=ntp
 PKG_VERSION="4.2.8p18"
-#PKG_VERSION="4.2.8p17"
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-#PKG_SOURCE_URL="https://downloads.nwtime.org/ntp/${PKG_SOURCE}"
 PKG_SOURCE_URL="https://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_HASH="cf84c5f3fb1a295284942624d823fffa634144e096cfc4f9969ac98ef5f468e5"
-#PKG_HASH="103dd272e6a66c5b8df07dce5e9a02555fcd6f1397bdfb782237328e89d3a866"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}"
 cd "${SRC_ROOT}/${PKG_NAME}"
@@ -1232,7 +1229,6 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker" "."
 
-    #export CPPFLAGS="-DN_PPS=18 -I${PREFIX}/usr/include ${CPPFLAGS}"
     export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
     export LIBS="-lcap"
 
@@ -1242,41 +1238,41 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     is_debug() { contains "${PKG_TARGET_VARIANT}" "debug"; }
 
     ./configure \
-         --prefix="${PREFIX}" \
-         --host="${HOST}" \
-         --with-locfile=debian \
-         --enable-static \
-         --disable-shared \
-         $(enable_options "debugging" is_debug) \
-         --enable-signalled-io \
-         --enable-autokey \
-         --enable-ipv6 \
-         --enable-saveconfig \
-         --enable-linuxcaps \
-         --enable-c99-snprintf \
-         --enable-local-libopts \
-         --enable-local-libevent \
-         --enable-accurate-adjtime \
-         --with-sntp \
-         --with-lineeditlibs \
-         --with-crypto \
-         --with-openssl-libdir="${PREFIX}/lib" \
-         --with-openssl-incdir="${PREFIX}/include" \
-         --enable-verbose-ssl \
-         --enable-openssl-random \
-         --enable-thread-support \
-         --with-threads \
-         --with-yielding-select=yes \
-         --without-rpath \
-         --without-ntpsnmpd \
-         --disable-problem-tests \
-         --disable-dependency-tracking \
-         --disable-silent-rules \
-         --enable-parse-clocks \
-         --enable-NMEA --enable-ATOM --enable-SHM --enable-LOCAL-CLOCK \
-         --enable-SPECTRACOM --enable-ARBITER --enable-HPGPS \
-         --enable-TRIMBLE --enable-JJY --enable-ZYFER \
-         --enable-GPSD \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
+        --with-locfile=debian \
+        --enable-static \
+        --disable-shared \
+        $(enable_options "debugging" is_debug) \
+        --enable-signalled-io \
+        --enable-autokey \
+        --enable-ipv6 \
+        --enable-saveconfig \
+        --enable-linuxcaps \
+        --enable-c99-snprintf \
+        --enable-local-libopts \
+        --enable-local-libevent \
+        --enable-accurate-adjtime \
+        --with-sntp \
+        --with-lineeditlibs \
+        --with-crypto \
+        --with-openssl-libdir="${PREFIX}/lib" \
+        --with-openssl-incdir="${PREFIX}/include" \
+        --enable-verbose-ssl \
+        --enable-openssl-random \
+        --enable-thread-support \
+        --with-threads \
+        --with-yielding-select=yes \
+        --without-rpath \
+        --without-ntpsnmpd \
+        --disable-problem-tests \
+        --disable-dependency-tracking \
+        --disable-silent-rules \
+        --enable-parse-clocks \
+        --enable-NMEA --enable-ATOM --enable-SHM --enable-LOCAL-CLOCK \
+        --enable-SPECTRACOM --enable-ARBITER --enable-HPGPS \
+        --enable-TRIMBLE --enable-JJY --enable-ZYFER \
+        --enable-GPSD \
     || handle_configure_error $?
 
     export LDFLAGS="-all-static ${LDFLAGS}"
