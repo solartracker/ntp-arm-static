@@ -1442,7 +1442,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     export LDFLAGS="-all-static ${LDFLAGS}"
 
-    $MAKE
+    $MAKE LDFLAGS="${LDFLAGS}"
     make install
 
     # strip and verify there are no dependencies for static build
