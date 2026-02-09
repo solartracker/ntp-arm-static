@@ -1111,15 +1111,15 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     export CROSS_COMPILE=${CROSS_PREFIX}
+    export BUILD_CC="gcc"
+    export BUILD_CPPFLAGS="-I./libcap/include"
+    export SHARED=no
+    export prefix="${PREFIX}"
+    export lib="lib"
+    export RAISE_SETFCAP="no"
 
-    $MAKE prefix="${PREFIX}" \
-          inc_prefix="${PREFIX}/usr" \
-          lib="lib" \
-          BUILD_CC="gcc" \
-          BUILD_CPPFLAGS="-I./libcap/include"
-
-    make install DESTDIR="${PREFIX}" \
-                 lib="lib"
+    $MAKE
+    make install
 
     touch __package_installed
 fi
@@ -1279,7 +1279,9 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
          --enable-GPSD \
     || handle_configure_error $?
 
-    $MAKE LDFLAGS="-static -all-static ${LDFLAGS}"
+    export LDFLAGS="-all-static ${LDFLAGS}"
+
+    $MAKE LDFLAGS="${LDFLAGS}"
     make install
 
     # restore the hidden shared libraries
