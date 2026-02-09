@@ -1300,7 +1300,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     export LDFLAGS="-static ${LDFLAGS}"
     export LIBS="-lzstd -lz"
-    export CFLAGS="${CFLAGS} -Wno-int-conversion"
+    #export CFLAGS="${CFLAGS} -Wno-int-conversion"
 
     ./Configure linux-armv4 no-asm \
         enable-zlib enable-zstd no-shared \
