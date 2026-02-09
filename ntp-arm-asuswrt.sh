@@ -1196,20 +1196,15 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     export CROSS_COMPILE=${CROSS_PREFIX}
+    export BUILD_CC="gcc"
+    export BUILD_CPPFLAGS="-I./libcap/include"
+    export SHARED=no
+    export prefix="${PREFIX}"
+    export lib="lib"
+    export RAISE_SETFCAP="no"
 
-    $MAKE prefix="${PREFIX}" \
-          inc_prefix="${PREFIX}/usr" \
-          lib="lib" \
-          BUILD_CC="gcc" \
-          BUILD_CPPFLAGS="-I./libcap/include"
-
-    make install DESTDIR="${PREFIX}" \
-                 lib="lib" \
-                 RAISE_SETFCAP="no"
-
-    # force static linking of this; library does not exist on target device
-    rm -f "${PREFIX}/lib/libcap.so"*
-    rm -f "${PREFIX}/lib/libpsx.so"*
+    $MAKE
+    make install
 
     touch __package_installed
 fi
@@ -1445,7 +1440,9 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --enable-GPSD \
     || handle_configure_error $?
 
-    $MAKE LDFLAGS="-static -all-static ${LDFLAGS}"
+    export LDFLAGS="-all-static ${LDFLAGS}"
+
+    $MAKE
     make install
 
     # strip and verify there are no dependencies for static build
