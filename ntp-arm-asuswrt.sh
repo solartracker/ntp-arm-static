@@ -1256,7 +1256,8 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --with-sysroot="${SYSROOT}" \
         --enable-languages=c,c++ \
         --enable-threads \
-        --enable-shared \
+        --enable-static \
+        --disable-shared \
         --disable-bootstrap \
         --disable-multilib \
         --disable-libmudflap \
@@ -1272,9 +1273,6 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
 
     $MAKE CXXFLAGS="${CXXFLAGS}" all-target-libatomic
     make install-target-libatomic
-
-    # force static linking of this; library does not exist on target device
-    rm -f "${CROSSBUILD_DIR}/${TARGET}/lib/libatomic.so"*
 
     touch "__package_installed"
 fi
