@@ -31,7 +31,7 @@ set -x
 main() {
 PKG_ROOT=ntp
 PKG_ROOT_VERSION="4.2.8p18"
-PKG_ROOT_RELEASE=1
+PKG_ROOT_RELEASE=2
 PKG_TARGET_CPU=armv7
 PKG_TARGET_VARIANT=_musl
 #PKG_TARGET_VARIANT=_musl+debug
@@ -39,12 +39,13 @@ PKG_TARGET_VARIANT=_musl
 CROSSBUILD_SUBDIR="cross-arm-linux-musleabi-build"
 CROSSBUILD_DIR="${PARENT_DIR}/${CROSSBUILD_SUBDIR}"
 export TARGET=arm-linux-musleabi
+TARGET_DIR="${CROSSBUILD_DIR}/${TARGET}"
 
 HOST_CPU="$(uname -m)"
-export PREFIX="${CROSSBUILD_DIR}"
+SYSROOT="${TARGET_DIR}/sysroot"
+export PREFIX="${SYSROOT}"
 export HOST=${TARGET}
-export SYSROOT="${PREFIX}/${TARGET}"
-export PATH="${PATH}:${PREFIX}/bin:${SYSROOT}/bin"
+export PATH="${CROSSBUILD_DIR}/bin:${PATH}"
 
 CROSS_PREFIX=${TARGET}-
 export CC=${CROSS_PREFIX}gcc
@@ -882,7 +883,7 @@ update_patch_library() {
 check_static() {
     ldd() {
         if ${ARCH_NATIVE}; then
-            "${SYSROOT}/lib/libc.so" --list "$@"
+            "${PREFIX}/lib/libc.so" --list "$@"
         else
             true
         fi
@@ -1037,9 +1038,9 @@ if signature_file_exists "${PKG_SOURCE_PATH}"; then
     #
     # Example of what your sources directory might look like:
     # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz
-    # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sum
+    # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sha256
     # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz
-    # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz.sum -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sum
+    # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz.sha256 -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sha256
     #
     PKG_HASH=""
 else
@@ -1078,14 +1079,15 @@ if [ ! -x "${CROSSBUILD_DIR}/bin/${TARGET}-gcc" ]; then
     echo ""
     exit 1
 fi
-if [ ! -x "${CROSSBUILD_DIR}/${TARGET}/lib/libc.so" ]; then
+if [ ! -x "${PREFIX}/lib/libc.so" ]; then
     echo "ERROR: Toolchain installation appears incomplete."
-    echo "Missing libc.so in ${CROSSBUILD_DIR}/${TARGET}/lib"
+    echo "Missing libc.so in ${PREFIX}/lib"
     echo ""
     exit 1
 fi
 ) #END sub-shell
 } #END install_build_environment()
+
 
 download_and_compile() {
 mkdir -p "${SRC_ROOT}"

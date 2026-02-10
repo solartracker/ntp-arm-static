@@ -31,7 +31,7 @@ set -x
 main() {
 PKG_ROOT=ntp
 PKG_ROOT_VERSION="4.2.8p18"
-PKG_ROOT_RELEASE=1
+PKG_ROOT_RELEASE=2
 PKG_TARGET_CPU=armv7
 PKG_TARGET_VARIANT=_asuswrt
 #PKG_TARGET_VARIANT=_asuswrt+debug
@@ -47,17 +47,17 @@ TOOLCHAINS_SUBDIR="am-toolchains"
 CROSSBUILD_SUBDIR="brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3"
 CROSSBUILD_DIR="${PARENT_DIR}/${TOOLCHAINS_SUBDIR}/${CROSSBUILD_SUBDIR}"
 export TARGET=arm-brcm-linux-uclibcgnueabi
+TARGET_DIR="${CROSSBUILD_DIR}/${TARGET}"
 
 HOST_CPU="$(uname -m)"
 if [ "${HOST_CPU}" != "x86_64" ]; then
     echo "Toolchain cannot be run on this CPU: ${HOST_CPU}" >&2
     return 1
 fi
-export SYSROOT="${CROSSBUILD_DIR}/${TARGET}/sysroot"
+SYSROOT="${TARGET_DIR}/sysroot"
 export PREFIX="${SYSROOT}"
 export HOST=${TARGET}
-PATH_ORIG="${PATH}"
-export PATH="${PATH}:${CROSSBUILD_DIR}/bin:${CROSSBUILD_DIR}/${TARGET}/bin"
+export PATH="${CROSSBUILD_DIR}/bin:${PATH}"
 
 CROSS_PREFIX=${TARGET}-
 export CC=${CROSS_PREFIX}gcc
@@ -1000,7 +1000,7 @@ update_patch_library() {
 check_static() {
     ldd() {
         if ${ARCH_NATIVE}; then
-            "${SYSROOT}/lib/libc.so" --list "$@"
+            "${PREFIX}/lib/libc.so" --list "$@"
         else
             true
         fi
@@ -1163,14 +1163,15 @@ if [ ! -x "${CROSSBUILD_DIR}/bin/${TARGET}-gcc" ]; then
     echo ""
     exit 1
 fi
-if [ ! -x "${CROSSBUILD_DIR}/${TARGET}/lib/libc.so" ] && [ ! -x "${CROSSBUILD_DIR}/lib/libc.so" ]; then
+if [ ! -x "${PREFIX}/lib/libuClibc-0.9.32.1.so" ]; then
     echo "ERROR: Toolchain installation appears incomplete."
-    echo "Missing libc.so"
+    echo "Missing libuClibc-0.9.32.1.so in ${SYSROOT}/lib"
     echo ""
     exit 1
 fi
 ) #END sub-shell
 } #END install_build_environment()
+
 
 download_and_compile() {
 mkdir -p "${SRC_ROOT}"
