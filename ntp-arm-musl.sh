@@ -1238,11 +1238,9 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/ntp-4.2.8p18/solartracker" "."
 
+    export LDFLAGS="-static ${LDFLAGS}" # use static linking for tests run by configure
     export CPPFLAGS="-I${PREFIX}/usr/include ${CPPFLAGS}"
     export LIBS="-lcap"
-
-    # temporarily hide shared libraries (.so) to force static ones (.a)
-    hide_shared_libraries
 
     is_debug() { contains "${PKG_TARGET_VARIANT}" "debug"; }
 
@@ -1284,13 +1282,10 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --enable-GPSD \
     || handle_configure_error $?
 
-    export LDFLAGS="-all-static ${LDFLAGS}"
+    export LDFLAGS="-all-static ${LDFLAGS}" # make static executable
 
     $MAKE LDFLAGS="${LDFLAGS}"
     make install
-
-    # restore the hidden shared libraries
-    restore_shared_libraries
 
     # strip and verify there are no dependencies for static build
     finalize_build "${PREFIX}/sbin/ntpd" \
