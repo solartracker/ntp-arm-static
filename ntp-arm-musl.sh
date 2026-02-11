@@ -943,7 +943,6 @@ hide_shared_libraries() {
     fi
     mkdir -p "${PREFIX}/lib_hidden" || true
     mv -f "${PREFIX}/lib/"*".so"* "${PREFIX}/lib_hidden/" || true
-    mv -f "${PREFIX}/lib_hidden/libcc1."* "${PREFIX}/lib/" || true
     return 0
 }
 
