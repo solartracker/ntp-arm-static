@@ -62,6 +62,7 @@ CROSS_PREFIX=${TARGET}-
 export CC=${CROSS_PREFIX}gcc
 export AR=${CROSS_PREFIX}ar
 export RANLIB=${CROSS_PREFIX}ranlib
+export OBJCOPY=${CROSS_PREFIX}objcopy
 export STRIP=${CROSS_PREFIX}strip
 export READELF=${CROSS_PREFIX}readelf
 
@@ -1207,6 +1208,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export CROSS_COMPILE=${CROSS_PREFIX}
     export BUILD_CC="gcc"
     export BUILD_CPPFLAGS="-I./libcap/include"
+    export BUILD_COPTS=
+    export BUILD_CFLAGS=
+    export BUILD_LDFLAGS=
     export SHARED=no
     export prefix="${PREFIX}"
     export lib="lib"
