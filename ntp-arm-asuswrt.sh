@@ -1454,13 +1454,13 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 fi
 )
 
+) #END sub-shell
 set +x
 echo ""
 echo "[*] Finished compiling ${PKG_ROOT} ${PKG_ROOT_VERSION}"
 echo ""
 
 return 0
-) #END sub-shell
 } #END download_and_compile()
 
 
