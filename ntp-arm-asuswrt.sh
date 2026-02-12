@@ -1179,6 +1179,7 @@ fi
 
 
 download_and_compile() {
+( #BEGIN sub-shell
 export PATH="${CROSSBUILD_DIR}/bin:${PATH}"
 mkdir -p "${SRC_ROOT}"
 
@@ -1459,6 +1460,7 @@ echo "[*] Finished compiling ${PKG_ROOT} ${PKG_ROOT_VERSION}"
 echo ""
 
 return 0
+) #END sub-shell
 } #END download_and_compile()
 
 
