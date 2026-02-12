@@ -57,7 +57,6 @@ fi
 SYSROOT="${TARGET_DIR}/sysroot"
 export PREFIX="${SYSROOT}"
 export HOST=${TARGET}
-export PATH="${CROSSBUILD_DIR}/bin:${PATH}"
 
 CROSS_PREFIX=${TARGET}-
 export CC=${CROSS_PREFIX}gcc
@@ -85,7 +84,8 @@ case "${HOST_CPU}" in
 esac
 
 SRC_ROOT="${CROSSBUILD_DIR}/src/${PKG_ROOT}"
-PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
+PACKAGER_NAME="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}${PKG_TARGET_VARIANT}"
+PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PACKAGER_NAME}"
 
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #MAKE="make -j1"                                  # one job at a time
@@ -195,6 +195,7 @@ install_dependencies() {
         "wget"
         "curl"
         "git"
+        "tar"
         "libgmp-dev"
         "libmpfr-dev"
         "libmpc-dev"
@@ -1077,14 +1078,14 @@ add_items_to_install_package()
     [ -n "$1" ] || return 1
     [ -n "$PKG_ROOT" ]            || return 1
     [ -n "$PKG_ROOT_VERSION" ]    || return 1
-    [ -n "$PKG_ROOT_RELEASE" ]    || return 1
-    [ -n "$PKG_TARGET_CPU" ]      || return 1
+    [ -n "$PACKAGER_ROOT" ]       || return 1
+    [ -n "$PACKAGER_NAME" ]       || return 1
     [ -n "$CACHED_DIR" ]          || return 1
 
     local timestamp_file="$1"
     local pkg_files=""
     for fmt in gz xz; do
-        local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}${PKG_TARGET_VARIANT}.tar.${fmt}"
+        local pkg_file="${PACKAGER_NAME}.tar.${fmt}"
         local pkg_path="${CACHED_DIR}/${pkg_file}"
         local temp_path=""
         local timestamp=""
@@ -1178,6 +1179,7 @@ fi
 
 
 download_and_compile() {
+export PATH="${CROSSBUILD_DIR}/bin:${PATH}"
 mkdir -p "${SRC_ROOT}"
 
 ################################################################################
