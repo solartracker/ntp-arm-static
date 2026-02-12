@@ -1130,7 +1130,7 @@ add_items_to_install_package()
     echo "[*] Finished creating the install package."
     echo ""
     echo "[*] Install package is here:"
-    echo "${pkg_files}"
+    echo -e "${pkg_files}"
     echo ""
 
     return 0
