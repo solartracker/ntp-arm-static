@@ -48,7 +48,9 @@ export HOST=${TARGET}
 
 CROSS_PREFIX=${TARGET}-
 export CC=${CROSS_PREFIX}gcc
+export CXX=${CROSS_PREFIX}g++
 export AR=${CROSS_PREFIX}ar
+export LD=${CROSS_PREFIX}ld
 export RANLIB=${CROSS_PREFIX}ranlib
 export OBJCOPY=${CROSS_PREFIX}objcopy
 export STRIP=${CROSS_PREFIX}strip
@@ -73,8 +75,10 @@ case "${HOST_CPU}" in
 esac
 
 SRC_ROOT="${CROSSBUILD_DIR}/src/${PKG_ROOT}"
+STAGE_DIR="${CROSSBUILD_DIR}/stage/${PKG_ROOT}"
 PACKAGER_NAME="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}${PKG_TARGET_VARIANT}"
 PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PACKAGER_NAME}"
+PACKAGER_TOPDIR="${PACKAGER_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
 
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #MAKE="make -j1"                                  # one job at a time
@@ -84,8 +88,6 @@ export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
 install_build_environment
-
-#create_cmake_toolchain_file
 
 download_and_compile
 
@@ -100,27 +102,27 @@ return 0
 create_install_package() {
 
 rm -rf "${PACKAGER_ROOT}"
-mkdir -p "${PACKAGER_ROOT}/sbin"
-mkdir -p "${PACKAGER_ROOT}/bin"
-mkdir -p "${PACKAGER_ROOT}/usr/bin"
-cp -p "${PREFIX}/sbin/ntpd" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/ntpdate" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/ntp-keygen" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/tickadj" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/calc_tickadj" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/ntp-wait" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/sbin/update-leap" "${PACKAGER_ROOT}/sbin/"
-cp -p "${PREFIX}/bin/ntpdc" "${PACKAGER_ROOT}/bin/"
-cp -p "${PREFIX}/bin/ntpq" "${PACKAGER_ROOT}/bin/"
-cp -p "${PREFIX}/bin/sntp" "${PACKAGER_ROOT}/bin/"
-cp -p "${PREFIX}/bin/ntpsweep" "${PACKAGER_ROOT}/bin/"
-cp -p "${PREFIX}/bin/ntptrace" "${PACKAGER_ROOT}/bin/"
-cp -p "${PREFIX}/usr/bin/ppsfind" "${PACKAGER_ROOT}/usr/bin/"
-cp -p "${PREFIX}/usr/bin/ppstest" "${PACKAGER_ROOT}/usr/bin/"
-cp -p "${PREFIX}/usr/bin/ppsctl" "${PACKAGER_ROOT}/usr/bin/"
-cp -p "${PREFIX}/usr/bin/ppswatch" "${PACKAGER_ROOT}/usr/bin/"
-cp -p "${PREFIX}/usr/bin/ppsldisc" "${PACKAGER_ROOT}/usr/bin/"
-cp -p "${PREFIX}/bin/openssl" "${PACKAGER_ROOT}/bin/"
+mkdir -p "${PACKAGER_TOPDIR}/sbin"
+mkdir -p "${PACKAGER_TOPDIR}/bin"
+mkdir -p "${PACKAGER_TOPDIR}/usr/bin"
+cp -p "${PREFIX}/sbin/ntpd" "${PACKAGER_TOPDIR}/sbin/"
+cp -p "${PREFIX}/sbin/ntpdate" "${PACKAGER_TOPDIR}/sbin/"
+cp -p "${PREFIX}/sbin/ntp-keygen" "${PACKAGER_TOPDIR}/sbin/"
+cp -p "${PREFIX}/sbin/tickadj" "${PACKAGER_TOPDIR}/sbin/"
+cp -p "${PREFIX}/sbin/calc_tickadj" "${PACKAGER_TOPDIR}/sbin/"
+cp -p "${PREFIX}/sbin/ntp-wait" "${PACKAGER_TOPDIR}/sbin/"
+cp -p "${PREFIX}/sbin/update-leap" "${PACKAGER_TOPDIR}/sbin/"
+cp -p "${PREFIX}/bin/ntpdc" "${PACKAGER_TOPDIR}/bin/"
+cp -p "${PREFIX}/bin/ntpq" "${PACKAGER_TOPDIR}/bin/"
+cp -p "${PREFIX}/bin/sntp" "${PACKAGER_TOPDIR}/bin/"
+cp -p "${PREFIX}/bin/ntpsweep" "${PACKAGER_TOPDIR}/bin/"
+cp -p "${PREFIX}/bin/ntptrace" "${PACKAGER_TOPDIR}/bin/"
+cp -p "${PREFIX}/usr/bin/ppsfind" "${PACKAGER_TOPDIR}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppstest" "${PACKAGER_TOPDIR}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppsctl" "${PACKAGER_TOPDIR}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppswatch" "${PACKAGER_TOPDIR}/usr/bin/"
+cp -p "${PREFIX}/usr/bin/ppsldisc" "${PACKAGER_TOPDIR}/usr/bin/"
+cp -p "${PREFIX}/bin/openssl" "${PACKAGER_TOPDIR}/bin/"
 add_items_to_install_package "${PREFIX}/sbin/ntpd"
 
 return 0
@@ -178,19 +180,26 @@ return 0
 
 # If autoconf/configure fails due to missing libraries or undefined symbols, you
 # immediately see all undefined references without having to manually search config.log
-handle_configure_error() {
+handle_configure_error()
+( # BEGIN sub-shell
+    set +x
     local rc=$1
+    local config_log_file="$2"
+
+    if [ -z "${config_log_file}" ] || [ ! -f "${config_log_file}" ]; then
+        config_log_file="config.log"
+    fi
 
     #grep -R --include="config.log" --color=always "undefined reference" .
     #find . -name "config.log" -exec grep -H "undefined reference" {} \;
-    #find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option|No such file or directory" {} \;
-    find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option" {} \;
+    find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option|No such file or directory" {} \;
+    #find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option" {} \;
 
     # Force failure if rc is zero, since error was detected
     [ "${rc}" -eq 0 ] && return 1
 
     return ${rc}
-}
+) # END sub-shell
 
 ################################################################################
 # Package management
@@ -831,12 +840,16 @@ enable_options() {
 }
 
 contains() {
-    haystack=$1
-    needle=$2
+    case "$1" in
+        *"$2"*) return 0 ;;
+        *)      return 1 ;;
+    esac
+}
 
-    case $haystack in
-        *"$needle"*) return 0 ;;
-        *)           return 1 ;;
+ends_with() {
+    case "$1" in
+        *"$2") return 0 ;;
+        *)     return 1 ;;
     esac
 }
 
@@ -991,7 +1004,6 @@ add_items_to_install_package()
         timestamp="@$(stat -c %Y "${timestamp_file}")"
         cd "${PACKAGER_ROOT}" || return 1
         if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
-                --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
                 -C "${PACKAGER_ROOT}" * \
                 -cv | ${compressor} >"${temp_path}"; then
             return 1
@@ -1102,6 +1114,7 @@ download_and_compile() {
 ( #BEGIN sub-shell
 export PATH="${CROSSBUILD_DIR}/bin:${PATH}"
 mkdir -p "${SRC_ROOT}"
+#mkdir -p "${STAGE_DIR}"
 
 ################################################################################
 # libcap-2.77
