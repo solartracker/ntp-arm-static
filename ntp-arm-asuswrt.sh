@@ -1184,7 +1184,13 @@ if [ ! -x "${CROSSBUILD_DIR}/bin/${TARGET}-gcc" ]; then
 fi
 if [ ! -x "${CROSSBUILD_DIR}/lib/libuClibc-0.9.32.1.so" ]; then
     echo "ERROR: Toolchain installation appears incomplete."
-    echo "Missing libuClibc-0.9.32.1.so in ${PREFIX}/lib"
+    echo "Missing libuClibc-0.9.32.1.so in ${CROSSBUILD_DIR}/lib"
+    echo ""
+    exit 1
+fi
+if [ ! -x "${PREFIX}/lib/ld-uClibc-0.9.32.1.so" ]; then
+    echo "ERROR: Toolchain installation appears incomplete."
+    echo "Missing ld-uClibc-0.9.32.1.so in ${PREFIX}/lib"
     echo ""
     exit 1
 fi
