@@ -1266,7 +1266,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     export PREFIX="${CROSSBUILD_DIR}"
     export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
 
-    unset CC AR RANLIB STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
+    unset CC CXX AR LD RANLIB OBJCOPY STRIP READELF CFLAGS_COMMON CFLAGS CXXFLAGS LDFLAGS CPPFLAGS
     STRIP=strip
     READELF=readelf
     CFLAGS_COMMON="-O2 -g -Wno-switch -Wno-array-bounds -Wno-implicit-fallthrough -Wno-unused-value -Wno-switch-bool -Wno-expansion-to-defined -Wno-format-security -Wno-unused-result -Wno-strict-aliasing -Wno-format-diag -Wno-stringop-overflow -Wno-format-overflow -Wno-stringop-truncation -Wno-cast-function-type -Wno-ignored-qualifiers -Wno-misleading-indentation -Wno-logical-not-parentheses -Wno-bool-compare -Wno-int-in-bool-context -Wno-memset-elt-size"
