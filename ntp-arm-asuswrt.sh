@@ -1175,6 +1175,9 @@ if [ ! -d "${CROSSBUILD_DIR}" ]; then
     unpack_and_verify "${PKG_SOURCE_PATH}" "${PKG_NAME}" "${PKG_HASH}"
 fi
 
+# restore the hidden shared libraries, if they were not previously restored
+restore_shared_libraries
+
 # Check for required toolchain tools
 if [ ! -x "${CROSSBUILD_DIR}/bin/${TARGET}-gcc" ]; then
     echo "ERROR: Toolchain installation appears incomplete."
