@@ -18,15 +18,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 ################################################################################
-PATH_CMD="$(readlink -f -- "$0")"
-SCRIPT_DIR="$(dirname -- "$(readlink -f -- "$0")")"
-PARENT_DIR="$(dirname -- "$(dirname -- "$(readlink -f -- "$0")")")"
-CACHED_DIR="${PARENT_DIR}/solartracker-sources"
-FILE_DOWNLOADER='use_wget'
-#FILE_DOWNLOADER='use_curl'
-#FILE_DOWNLOADER='use_curl_socks5_proxy'; CURL_SOCKS5_PROXY="192.168.1.1:9150"
-set -e
-set -x
 
 main() {
 PKG_ROOT=ntp
@@ -1029,6 +1020,9 @@ check_static() {
         if ${READELF} -d "${bin}" 2>/dev/null | grep NEEDED; then
             rc=1
         fi || true
+        if [ -L "${bin}.static" ]; then
+          rm "${bin}.static" 2>/dev/null || true
+        fi 
         ldd "${bin}" 2>&1 || true
     done
 
@@ -1041,7 +1035,8 @@ check_static() {
     return ${rc}
 }
 
-finalize_build() {
+finalize_build()
+( # BEGIN sub-shell
     set +x
     echo ""
     echo "Stripping symbols and sections from files..."
@@ -1063,10 +1058,9 @@ finalize_build() {
             *) ln -sfn "$(basename "${bin}")" "${bin}.static" ;;
         esac
     done
-    set -x
 
     return 0
-}
+) # END sub-shell
 
 # temporarily hide shared libraries (.so) to force cmake to use the static ones (.a)
 hide_shared_libraries() {
@@ -1491,7 +1485,24 @@ echo ""
 return 0
 } #END download_and_compile()
 
+################################################################################
+# Initialize
+#
+PATH_CMD="$(readlink -f -- "$0")"
+SCRIPT_DIR="$(dirname -- "$(readlink -f -- "$0")")"
+PARENT_DIR="$(dirname -- "$(dirname -- "$(readlink -f -- "$0")")")"
+CACHED_DIR="${PARENT_DIR}/solartracker-sources"
+FILE_DOWNLOADER='use_wget'
+#FILE_DOWNLOADER='use_curl'
+#FILE_DOWNLOADER='use_curl_socks5_proxy'; CURL_SOCKS5_PROXY="192.168.1.1:9150"
+set -e
+set -x
+# Workaround for autotools system name detection when cross-compiling
+SYSTEM="$(system_name "${SCRIPT_DIR}/files/config.guess")"
 
+################################################################################
+# Enter main
+#
 main
 echo ""
 echo "[*] Script exited cleanly."
