@@ -82,6 +82,9 @@ STAGE_DIR="${CROSSBUILD_DIR}/stage/${PKG_ROOT}"
 PACKAGER_NAME="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}${PKG_TARGET_VARIANT}"
 PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PACKAGER_NAME}"
 PACKAGER_TOPDIR="${PACKAGER_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
+PORTABLE_DIR="/tmp/portable-${PKG_ROOT}"
+SYSROOT_PORTABLE_DIR="${SYSROOT}/tmp/portable-${PKG_ROOT}"
+PREFIX_PORTABLE_DIR="${SYSROOT_PORTABLE_DIR}"
 
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #MAKE="make -j1"                                  # one job at a time
@@ -93,8 +96,6 @@ unset PKG_CONFIG_PATH
 check_dependencies
 
 install_build_environment
-
-#create_cmake_toolchain_file
 
 download_and_compile
 
@@ -258,11 +259,11 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
     printf '%s\n' "set(CMAKE_SYSTEM_PROCESSOR arm)"
     printf '%s\n' ""
     printf '%s\n' "# Cross-compiler"
-    printf '%s\n' "set(CMAKE_C_COMPILER arm-linux-musleabi-gcc)"
-    printf '%s\n' "set(CMAKE_CXX_COMPILER arm-linux-musleabi-g++)"
-    printf '%s\n' "set(CMAKE_AR arm-linux-musleabi-ar)"
-    printf '%s\n' "set(CMAKE_RANLIB arm-linux-musleabi-ranlib)"
-    printf '%s\n' "set(CMAKE_STRIP arm-linux-musleabi-strip)"
+    printf '%s\n' "set(CMAKE_C_COMPILER \"${CC}\")"
+    printf '%s\n' "set(CMAKE_CXX_COMPILER \"${CXX}\")"
+    printf '%s\n' "set(CMAKE_AR \"${AR}\")"
+    printf '%s\n' "set(CMAKE_RANLIB \"${RANLIB}\")"
+    printf '%s\n' "set(CMAKE_STRIP \"${STRIP}\")"
     printf '%s\n' ""
 #    printf '%s\n' "# Optional: sysroot"
 #    printf '%s\n' "set(CMAKE_SYSROOT \"${SYSROOT}\")"
@@ -963,6 +964,19 @@ ends_with() {
     esac
 }
 
+system_name() {
+    [ -n "$1" ] || return 1
+
+    local config_guess="$1"
+    [ -f "${config_guess}" ] || return 1
+
+    export CC_FOR_BUILD="$(which gcc)"
+    local system_name="$(${config_guess})"
+    unset CC_FOR_BUILD
+    echo "${system_name}"
+    return 0
+}
+
 is_version_git() {
     case "$1" in
         *+git*)
@@ -1105,7 +1119,7 @@ add_items_to_install_package()
             xz) compressor="xz -zc -7e -T0" ;;
         esac
 
-        echo "[*] Creating install package (.${fmt})..."
+        echo "[*] Add items to package (.${fmt})..."
         mkdir -p "${CACHED_DIR}"
         rm -f "${pkg_path}"
         rm -f "${pkg_path}.sum"
@@ -1201,6 +1215,7 @@ download_and_compile() {
 export PATH="${CROSSBUILD_DIR}/bin:${PATH}"
 mkdir -p "${SRC_ROOT}"
 #mkdir -p "${STAGE_DIR}"
+#create_cmake_toolchain_file
 
 ################################################################################
 # libcap-2.51
